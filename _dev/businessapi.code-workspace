@@ -1,0 +1,92 @@
+{
+  "folders": [
+    {
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "editor.rulers": [96, 100],
+    "editor.minimap.maxColumn": 90,
+    "editor.formatOnPaste": false,
+    "editor.formatOnType": false,
+    "editor.formatOnSave": true,
+    "editor.renderWhitespace": "all",
+    "editor.fontLigatures": true,
+    "editor.renderControlCharacters": true,
+    "editor.tabCompletion": "on",
+    "workbench.colorCustomizations": {
+      "titleBar.activeBackground": "#644100",
+      "titleBar.inactiveBackground": "#3d2800",
+      "titleBar.activeForeground": "#e7e7e7",
+      "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "workbench.settings.editor": "json",
+    "workbench.iconTheme": "vscode-icons",
+    "files.autoSave": "onFocusChange",
+    "files.trimTrailingWhitespace": true,
+    "files.watcherExclude": {
+      "**/.git/objects/**": true,
+      "**/.git/subtree-cache/**": true,
+      "**/node_modules/*/**": true
+    },
+    "explorer.autoReveal": true,
+    "git.ignoreLimitWarning": true,
+    "breadcrumbs.enabled": true,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "eslint.alwaysShowStatus": true,
+    "eslint.autoFixOnSave": true,
+    "eslint.packageManager": "yarn",
+    "eslint.lintTask.enable": true,
+    "tslint.ignoreDefinitionFiles": false,
+    "tslint.jsEnable": true,
+    "tslint.autoFixOnSave": true,
+    "vetur.trace.server": "verbose",
+    "vetur.format.defaultFormatter.html": "prettier",
+    "vetur.format.defaultFormatter.css": "prettier",
+    "vetur.format.defaultFormatter.postcss": "prettier",
+    "vetur.format.defaultFormatter.scss": "prettier",
+    "vetur.format.defaultFormatter.less": "prettier",
+    "vetur.format.defaultFormatter.js": "prettier",
+    "vetur.format.defaultFormatter.ts": "vscode-typescript",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "prettier.disableLanguages": [],
+    "liveshare.featureSet": "insiders",
+    "todo-tree.general.tags": ["TASKTODO"],
+    "todo-tree.highlights.customHighlight": {
+      "TASKTODO": {
+        "icon": "alert",
+        "type": "whole-line",
+        "background": "#570059",
+        "foreground": "white",
+        "opacity": 100
+      }
+    },
+    "peacock.remoteColor": "#c7482f",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "formulahendry.auto-rename-tag",
+      "coenraads.bracket-pair-colorizer-2",
+      "dbaeumer.vscode-eslint",
+      "mhutchie.git-graph",
+      "eamodio.gitlens",
+      "sirtori.indenticator",
+      "ms-vsliveshare.vsliveshare",
+      "eg2.vscode-npm-script",
+      "christian-kohler.npm-intellisense",
+      "christian-kohler.path-intellisense",
+      "esbenp.prettier-vscode",
+      "gruntfuggly.todo-tree",
+      "ms-vscode.vscode-typescript-tslint-plugin",
+      "prograhammer.tslint-vue",
+      "pflannery.vscode-versionlens",
+      "octref.vetur",
+      "dariofuzinato.vue-peek",
+      "mubaidr.vuejs-extension-pack",
+      "vscode-icons-team.vscode-icons"
+    ]
+  }
+}
