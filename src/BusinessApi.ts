@@ -1,12 +1,28 @@
 export class BusinessApi {
   constructor(private config: BusinessApiConfig) {}
 
-  listen() {}
+  listen() {
+    throw new Error("Not implemented yet");
+  }
 
-  callPOST(c: POSTCallConfig) {}
-  callGET(c: POSTCallConfig) {}
-  handlePOST(c: POSTHandlerConfig) {}
-  handleGET(c: GETHandlerConfig) {}
+  async callPOST<RESPONSE>(c: POSTCallConfig): Promise<RESPONSE> {
+    throw new Error("Not implemented yet");
+  }
+
+  async callGET<RESPONSE>(c: POSTCallConfig): Promise<RESPONSE> {
+    throw new Error("Not implemented yet");
+  }
+
+  handlePOST<REQUEST>(
+    c: POSTHandlerConfig,
+    handler: (body: REQUEST) => Promise<unknown>
+  ) {
+    throw new Error("Not implemented yet");
+  }
+
+  handleGET(c: GETHandlerConfig, handler: () => Promise<unknown>) {
+    throw new Error("Not implemented yet");
+  }
 }
 
 export interface BusinessApiConfig {
@@ -26,7 +42,6 @@ export interface POSTCallConfig extends GETCallConfig {
 export interface GETHandlerConfig {
   url: string;
   responseDefinition: string;
-  data: unknown;
 }
 
 export interface POSTHandlerConfig extends GETHandlerConfig {
