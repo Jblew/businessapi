@@ -1,0 +1,233 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AllEmployees": {
+      "items": {
+        "$ref": "#/definitions/Employee"
+      },
+      "type": "array"
+    },
+    "AllEmployeesSpec": {
+      "properties": {
+        "SchemaVer": {
+          "$id": "1.0.0",
+          "properties": {
+            "addition": {
+              "type": "number"
+            },
+            "model": {
+              "enum": [1],
+              "type": "number"
+            },
+            "revision": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "allEmployees": {
+          "items": {
+            "$ref": "#/definitions/Employee"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Chart": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PieChart"
+        },
+        {
+          "$ref": "#/definitions/ProgressBar"
+        }
+      ]
+    },
+    "ChartSpec": {
+      "properties": {
+        "SchemaVer": {
+          "$id": "2.0.0",
+          "properties": {
+            "addition": {
+              "type": "number"
+            },
+            "model": {
+              "enum": [2],
+              "type": "number"
+            },
+            "revision": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "chart": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PieChart"
+            },
+            {
+              "$ref": "#/definitions/ProgressBar"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "CompanyStructure": {
+      "properties": {
+        "anchor": {
+          "$ref": "#/definitions/Role"
+        },
+        "mtp": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CompanyStructureSpec": {
+      "properties": {
+        "SchemaVer": {
+          "$id": "1.3.1",
+          "properties": {
+            "addition": {
+              "type": "number"
+            },
+            "model": {
+              "enum": [1],
+              "type": "number"
+            },
+            "revision": {
+              "minimum": 3,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "companyStructure": {
+          "$ref": "#/definitions/CompanyStructure"
+        }
+      },
+      "type": "object"
+    },
+    "Employee": {
+      "properties": {
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LabeledPartitionChartValue": {
+      "properties": {
+        "colorHex": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "PieChart": {
+      "properties": {
+        "type": {
+          "enum": ["pie"],
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/definitions/LabeledPartitionChartValue"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "Process": {
+      "properties": {
+        "mermaid": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "purpose": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ProgressBar": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["progress"],
+          "type": "string"
+        },
+        "values": {
+          "$ref": "#/definitions/LabeledPartitionChartValue"
+        }
+      },
+      "type": "object"
+    },
+    "Role": {
+      "properties": {
+        "accountabilities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "domains": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "processes": {
+          "items": {
+            "$ref": "#/definitions/Process"
+          },
+          "type": "array"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "$ref": "#/definitions/Role"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

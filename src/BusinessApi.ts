@@ -1,7 +1,8 @@
+import * as express from "express";
 export class BusinessApi {
   constructor(private config: BusinessApiConfig) {}
 
-  listen() {
+  listen(): express.Application {
     throw new Error("Not implemented yet");
   }
 
