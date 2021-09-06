@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Schema } from "./Schema";
 
-describe.only("Schema", () => {
+describe("Schema", () => {
   const schemaPath = `${__dirname}/../mock/demo.schema.json`;
   describe("Constructor", () => {
     it("Throws when schema file does not exist", () => {

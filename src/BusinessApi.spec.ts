@@ -83,7 +83,9 @@ describe("BusinessApi", () => {
           )
           .send(schema)
           .expect(409)
-          .then((resp) => expect(resp.body.ok).to.be.true);
+          .then((resp) => {
+            expect(resp.body.error).to.match(/update your definition/i);
+          });
       });
     });
   });
