@@ -27,7 +27,18 @@ export class Schema {
     }
     const validator = this.ajv.getSchema(`#/definitions/${definitionName}`)!;
     const isValid = validator(data) as boolean;
-    return { isValid, error: `${validator.errors}` };
+    let error = "";
+    if (!isValid) {
+      error =
+        `${validator.errors?.[0].instancePath} ${validator.errors?.[0].message}`.substring(
+          0,
+          200
+        );
+    }
+    return {
+      isValid,
+      error,
+    };
   }
 
   public getSchemaObject(): any {

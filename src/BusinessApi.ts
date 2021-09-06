@@ -106,6 +106,19 @@ export class BusinessApi {
     if (!url) {
       throw new TypeError(`Env ${r.urlEnv} does not exist`);
     }
+    if (!this.schema.hasDefinition(r.responseDefinition)) {
+      throw new TypeError(
+        `Response schema definition ${r.responseDefinition} not found`
+      );
+    }
+    if (
+      r.requestDefinition &&
+      !this.schema.hasDefinition(r.requestDefinition)
+    ) {
+      throw new TypeError(
+        `Request schema definition ${r.requestDefinition} not found`
+      );
+    }
     const resp = await axios({
       method: r.method,
       url,
@@ -129,7 +142,9 @@ export class BusinessApi {
     const body = resp.data;
     const { isValid, error } = this.schema.isValid(r.responseDefinition, body);
     if (!isValid) {
-      throw new Error(`Response is not valid: ${error}`);
+      throw new Error(
+        `Response is not valid against schema ${r.responseDefinition}: ${error}`
+      );
     }
     return body;
   }

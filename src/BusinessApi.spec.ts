@@ -92,20 +92,27 @@ describe("BusinessApi", () => {
   });
 
   describe("endpoint - get", () => {
-    it("Throws error when url env is empty", () => {
-      expect(() =>
-        businessApi
-          .endpoint("NONEXISTENT_URL")
-          .responseSchema("ChartSpec")
-          .requestSchema("Nonexistent")
-      ).to.throw(/env does not exist/i);
-    });
+    it("Throws error when url env is empty", () =>
+      businessApi
+        .endpoint("NONEXISTENT_URL")
+        .responseSchema("ChartSpec")
+        .get()
+        .then(
+          () => expect.fail("Should fail"),
+          (err) => expect(err).to.match(/env .* does not exist/i)
+        ));
 
     it("Throws error when response definition is not found", () => {
       process.env.SERVICE_URL = "http://localhost/";
-      expect(() =>
-        businessApi.endpoint("SERVICE_URL").responseSchema("Nonexistent").get()
-      ).to.throw(/response definition/i);
+      return businessApi
+        .endpoint("SERVICE_URL")
+        .responseSchema("Nonexistent")
+        .get()
+        .then(
+          () => expect.fail("Should fail"),
+          (err) =>
+            expect(err).to.match(/response schema definition .* not found/i)
+        );
     });
 
     it("Calls url specified by named env", async () => {
@@ -134,13 +141,13 @@ describe("BusinessApi", () => {
       const serviceURL = "http://nock.test/get/employee";
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
-        .get("/get/chart")
+        .get("/get/employee")
         .reply(
           200,
           JSON.stringify({
             firstName: "a",
             lastName: "b",
-            username: "c",
+            username: 1,
             roles: [],
           })
         );
@@ -151,37 +158,52 @@ describe("BusinessApi", () => {
           .get();
         expect.fail("Should throw error");
       } catch (err) {
-        expect(err).to.match(/definition/i);
+        expect(err).to.match(
+          /response is not valid against schema .* \/username/i
+        );
       }
       expect(interceptor.isDone()).to.be.true;
     });
   });
 
   describe("endpoint - post", () => {
-    it("Throws error when url env is empty", () => {
-      expect(() =>
-        businessApi
-          .endpoint("NONEXISTENT_URL")
-          .responseSchema("ChartSpec")
-          .requestSchema("Nonexistent")
-      ).to.throw(/env does not exist/i);
+    it("Throws error when url env is empty", () =>
+      businessApi
+        .endpoint("NONEXISTENT_URL")
+        .responseSchema("ChartSpec")
+        .requestSchema("Nonexistent")
+        .post({})
+        .then(
+          () => expect.fail("Should fail"),
+          (err) => expect(err).to.match(/env .* does not exist/i)
+        ));
+
+    it("Throws error when request definition is not found", () => {
+      process.env.SERVICE_URL = "http://localhost/";
+      return businessApi
+        .endpoint("SERVICE_URL")
+        .responseSchema("ChartSpec")
+        .requestSchema("Nonexistent")
+        .post({})
+        .then(
+          () => expect.fail("Should fail"),
+          (err) =>
+            expect(err).to.match(/request schema definition .* not found/i)
+        );
     });
 
     it("Throws error when response definition is not found", () => {
       process.env.SERVICE_URL = "http://localhost/";
-      expect(() =>
-        businessApi
-          .endpoint("SERVICE_URL")
-          .responseSchema("ChartSpec")
-          .requestSchema("Nonexistent")
-      ).to.throw(/request definition/i);
-    });
-
-    it("Throws error when request definition is not found", () => {
-      process.env.SERVICE_URL = "http://localhost/";
-      expect(() =>
-        businessApi.endpoint("SERVICE_URL").responseSchema("Nonexistent").get()
-      ).to.throw(/response definition/i);
+      return businessApi
+        .endpoint("SERVICE_URL")
+        .responseSchema("Nonexistent")
+        .requestSchema("ChartSpec")
+        .post({})
+        .then(
+          () => expect.fail("Should fail"),
+          (err) =>
+            expect(err).to.match(/response schema definition .* not found/i)
+        );
     });
 
     it("Calls url specified by named env", async () => {
