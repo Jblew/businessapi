@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Schema } from "./Schema";
 
-describe("Schema", () => {
+describe.only("Schema", () => {
   const schemaPath = `${__dirname}/../mock/demo.schema.json`;
   describe("Constructor", () => {
     it("Throws when schema file does not exist", () => {
@@ -62,6 +62,49 @@ describe("Schema", () => {
     it("Returns schema object", () => {
       const schema = new Schema(schemaPath);
       expect(schema.getSchemaObject()).to.haveOwnProperty("$schema");
+    });
+  });
+
+  describe("isDefinitionCompatible", () => {
+    it("Throws TypeError if definition name not found", () => {
+      const ourSchema = new Schema(schemaPath);
+      const theirSchema = new Schema(schemaPath);
+      expect(() =>
+        ourSchema.isDefinitionCompatible(
+          "NonExistent",
+          theirSchema.getSchemaObject()
+        )
+      ).to.throw(TypeError);
+    });
+
+    it("Throws TypeError if definition does not have SchemaVer", () => {
+      const ourSchema = new Schema(schemaPath);
+      const theirSchema = new Schema(schemaPath);
+      expect(() =>
+        ourSchema.isDefinitionCompatible("Chart", theirSchema.getSchemaObject())
+      ).to.throw(TypeError);
+    });
+
+    it("Returns true if schemavers match", () => {
+      const ourSchema = new Schema(schemaPath);
+      const theirSchema = new Schema(schemaPath);
+      expect(
+        ourSchema.isDefinitionCompatible(
+          "ChartSpec",
+          theirSchema.getSchemaObject()
+        )
+      ).to.be.equal(true);
+    });
+
+    it("Returns false when schemavers are different", () => {
+      const ourSchema = new Schema(schemaPath);
+      const theirSchema = new Schema(schemaPath);
+      const theirSchemaObject = theirSchema.getSchemaObject();
+      theirSchemaObject.definitions.ChartSpec.properties.SchemaVer.$id =
+        "0.1.0";
+      expect(
+        ourSchema.isDefinitionCompatible("ChartSpec", theirSchemaObject)
+      ).to.be.equal(false);
     });
   });
 });

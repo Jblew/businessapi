@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import Ajv from "ajv";
+import { ArgumentError } from "ow/dist";
 
 export class Schema {
   private schema: any;
@@ -28,6 +29,43 @@ export class Schema {
 
   public getSchemaObject(): any {
     return this.schema;
+  }
+
+  public isDefinitionCompatible(definitionName: string, remoteSchema: any) {
+    if (!remoteSchema || !remoteSchema.$schema || !remoteSchema.definitions) {
+      throw new TypeError(
+        "Remote schema misses properties: $schema and definitions"
+      );
+    }
+    const theirDefinition = remoteSchema.definitions[definitionName];
+    const ourDefinition = this.schema.definitions[definitionName];
+    if (!theirDefinition) {
+      throw new TypeError(
+        `The specified definition (${definitionName}) does not exist in your schema`
+      );
+    }
+    if (!ourDefinition) {
+      throw new TypeError(
+        `The specified definition (${definitionName}) does not exist in our schema`
+      );
+    }
+
+    const theirSchemaVerId = theirDefinition.properties?.SchemaVer?.["$id"];
+    const ourSchemaVerID = ourDefinition.properties?.SchemaVer?.["$id"];
+    if (!theirSchemaVerId) {
+      throw new TypeError(
+        "Your definition misses .properties.SchemaVer.id field (case sensitive)"
+      );
+    }
+    if (!ourSchemaVerID) {
+      throw new TypeError(
+        "Our definition misses .properties.SchemaVer.id field (case sensitive)"
+      );
+    }
+    if (theirSchemaVerId !== ourSchemaVerID) {
+      return false;
+    }
+    return true;
   }
 
   private loadSchema(schemaPath: string): unknown {
