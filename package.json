@@ -1,7 +1,8 @@
 {
   "name": "businessapi",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "Helper library for hosting business logic api using JSON Schema",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
     "node": ">=8"
@@ -12,7 +13,9 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --exclude \"**/*.spec.ts\" --reporter=text --reporter=json-summary mocha --require ts-node/register \"src/**/*.spec.ts\""
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --exclude \"**/*.spec.ts\" --reporter=text --reporter=json-summary mocha --require ts-node/register \"src/**/*.spec.ts\"",
+    "release:semantic": "semantic-release",
+    "release": "npm run build && npm run test && npm run release:semantic"
   },
   "repository": {
     "type": "git",
@@ -34,6 +37,7 @@
     "chai": "^4.3.4",
     "mocha": "^9.1.0",
     "nyc": "^15.1.0",
+    "semantic-release": "^17.4.7",
     "supertest": "^6.1.6",
     "ts-node": "^10.2.1",
     "tsconfig-paths": "^3.11.0",
