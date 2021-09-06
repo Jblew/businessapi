@@ -2,6 +2,7 @@ import express from "express";
 import { AddressInfo } from "net";
 import { Schema } from "./Schema";
 import morgan from "morgan";
+import { installSchemaHandlers } from "./endpoints_schema";
 export class BusinessApi {
   private app: express.Application;
   private schema: Schema;
@@ -19,23 +20,79 @@ export class BusinessApi {
     return httpServer;
   }
 
-  async callPOST<RESPONSE>(c: POSTCallConfig): Promise<RESPONSE> {
-    throw new Error("Not implemented yet");
+  endpoint(urlEnv: string) {
+    return {
+      responseSchema: <RESPONSE>(responseDefinition: string) => ({
+        get: (): Promise<RESPONSE> => {
+          return this.makeRequest<RESPONSE>({
+            method: "GET",
+            urlEnv,
+            responseDefinition,
+          });
+        },
+        post: (body: any) => {
+          return {
+            requestSchema: (requestDefinition: string): Promise<RESPONSE> => {
+              return this.makeRequest<RESPONSE>({
+                method: "POST",
+                urlEnv,
+                responseDefinition,
+                requestDefinition,
+                body,
+              });
+            },
+          };
+        },
+      }),
+    };
   }
 
-  async callGET<RESPONSE>(c: POSTCallConfig): Promise<RESPONSE> {
-    throw new Error("Not implemented yet");
+  /*
+
+  apiServ
+  .handleGET("/dashboards/ceo")
+  .responseSchema("DashboardSpec")
+  .handle(() => {});
+
+apiServ
+  .handlePOST("/processes/complaint/complain")
+  .requestSchema("ComplaintSpec")
+  .responseSchema("GoodResponse")
+  .handle((body) => {});
+
+  */
+
+  handleGET(url: string) {
+    return {
+      responseSchema: (responseDefinition: string) => ({
+        handle: (handler: () => Promise<any>) => {
+          this.installHandler({
+            method: "GET",
+            url,
+            responseDefinition,
+            handler,
+          });
+        },
+      }),
+    };
   }
 
-  handlePOST<REQUEST>(
-    c: POSTHandlerConfig,
-    handler: (body: REQUEST) => Promise<unknown>
-  ) {
-    throw new Error("Not implemented yet");
-  }
-
-  handleGET(c: GETHandlerConfig, handler: () => Promise<unknown>) {
-    throw new Error("Not implemented yet");
+  handlePOST(url: string) {
+    return {
+      requestSchema: (requestDefinition: string) => ({
+        responseSchema: (responseDefinition: string) => ({
+          handle: (handler: () => Promise<any>) => {
+            this.installHandler({
+              method: "POST",
+              url,
+              requestDefinition,
+              responseDefinition,
+              handler,
+            });
+          },
+        }),
+      }),
+    };
   }
 
   private makeExpressApp() {
@@ -48,74 +105,32 @@ export class BusinessApi {
   }
 
   private installDefaultHandlers() {
-    this.app.get("/", (_, res) => {
-      res.send("");
-    });
-    this.app.get("/schema", (_, res) => {
-      res.send(this.schema.getSchemaObject());
-    });
-    this.app.post("/schema/is_definition_compatible", (req, res) =>
-      this.schemaCompatibilityHandler(req, res)
-    );
+    this.app.get("/", (_, res) => res.send(""));
+    installSchemaHandlers(this.app, this.schema);
   }
 
-  private schemaCompatibilityHandler(
-    req: express.Request,
-    res: express.Response
-  ) {
-    if (!req.body) {
-      return res.status(400).send({ error: "POST body is missing" });
-    }
-    if (!req.query.definition_name) {
-      return res.status(400).send({ error: "?definition_name is required" });
-    }
-    const theirSchema = req.body;
-    const definitionName = req.query.definition_name.toString();
-    try {
-      const result = this.schema.isDefinitionCompatible(
-        definitionName,
-        theirSchema
-      );
-      if (result) {
-        return res
-          .status(200)
-          .send({ ok: true, msg: "Both SchemaVers are compatible" });
-      } else {
-        return res.status(409).send({
-          error: `Your SchemaVer is not equal to our SchemaVer. Please update your definition`,
-        });
-      }
-    } catch (err) {
-      if (err instanceof TypeError) {
-        return res.status(400).send({ error: err.message });
-      } else {
-        console.error(err);
-        return res.status(500).send({ error: "Server error" });
-      }
-    }
+  private async makeRequest<R>(r: {
+    method: "POST" | "GET";
+    urlEnv: string;
+    responseDefinition: string;
+    requestDefinition?: string;
+    body?: any;
+  }): Promise<R> {
+    throw new Error("Not implemented yet");
+  }
+
+  private async installHandler<R>(r: {
+    method: "POST" | "GET";
+    url: string;
+    responseDefinition: string;
+    requestDefinition?: string;
+    handler: (body?: any) => Promise<any>;
+  }): Promise<R> {
+    throw new Error("Not implemented yet");
   }
 }
 
 export interface BusinessApiConfig {
   schemaPath: string;
   silent?: boolean;
-}
-
-export interface GETCallConfig {
-  urlEnv: string;
-  responseDefinition: string;
-  data: unknown;
-}
-
-export interface POSTCallConfig extends GETCallConfig {
-  requestDefinition: string;
-}
-
-export interface GETHandlerConfig {
-  url: string;
-  responseDefinition: string;
-}
-
-export interface POSTHandlerConfig extends GETHandlerConfig {
-  requestDefinition: string;
 }
