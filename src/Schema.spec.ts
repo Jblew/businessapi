@@ -1,16 +1,17 @@
 import { expect } from "chai";
 import { Schema } from "./Schema";
 
-describe("Schema", () => {
+describe.only("Schema", () => {
   const schemaPath = `${__dirname}/../mock/demo.schema.json`;
   describe("Constructor", () => {
     it("Throws when schema file does not exist", () => {
-      expect(() => new Schema(`${__dirname}/../mock/nonexistent.schema.json`))
-        .to.throw;
+      expect(
+        () => new Schema(`${__dirname}/../mock/nonexistent.schema.json`)
+      ).to.throw();
     });
 
     it("Passes when schema is loaded", () => {
-      expect(() => new Schema(schemaPath)).to.not.throw;
+      expect(() => new Schema(schemaPath)).to.not.throw();
     });
   });
 
@@ -29,7 +30,7 @@ describe("Schema", () => {
   describe("isValid", () => {
     it("Throws when definition does not exist", () => {
       const schema = new Schema(schemaPath);
-      expect(() => schema.isValid("NonExistentDefinition", {})).to.throw;
+      expect(() => schema.isValid("NonExistent", {})).to.throw();
     });
 
     it("Returns true when data is compliant", () => {
@@ -50,7 +51,7 @@ describe("Schema", () => {
         schema.isValid("Employee", {
           username: "user",
           firstName: "User",
-          // field lastName is missing
+          lastName: 5,
           roles: [],
         })
       ).to.be.false;
