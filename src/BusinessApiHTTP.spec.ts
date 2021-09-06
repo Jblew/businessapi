@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import request from "supertest";
-import { BusinessApi } from "./BusinessApi";
+import { BusinessApiHTTP } from "./BusinessApiHTTP";
 import * as fs from "fs";
 import nock from "nock";
 
-describe("BusinessApi", () => {
-  let businessApi: BusinessApi = makeBusinessApi();
+describe("BusinessApiHTTP", () => {
+  let businessApi: BusinessApiHTTP = makeBusinessApi();
   let businessApiServer: { close(): void };
   beforeEach(() => {
     businessApi = makeBusinessApi();
@@ -94,7 +94,7 @@ describe("BusinessApi", () => {
   describe("endpoint - get", () => {
     it("Throws error when url env is empty", () =>
       businessApi
-        .endpoint("NONEXISTENT_URL")
+        .call("NONEXISTENT_URL")
         .responseSchema("ChartSpec")
         .get()
         .then(
@@ -105,7 +105,7 @@ describe("BusinessApi", () => {
     it("Throws error when response definition is not found", () => {
       process.env.SERVICE_URL = "http://localhost/";
       return businessApi
-        .endpoint("SERVICE_URL")
+        .call("SERVICE_URL")
         .responseSchema("Nonexistent")
         .get()
         .then(
@@ -130,7 +130,7 @@ describe("BusinessApi", () => {
           })
         );
       const resp = await businessApi
-        .endpoint("SERVICE_URL_GET_EMPLOYEE")
+        .call("SERVICE_URL_GET_EMPLOYEE")
         .responseSchema<any>("Employee")
         .get();
       expect(resp.firstName).to.equal("a");
@@ -153,7 +153,7 @@ describe("BusinessApi", () => {
         );
       try {
         await businessApi
-          .endpoint("SERVICE_URL_GET_EMPLOYEE")
+          .call("SERVICE_URL_GET_EMPLOYEE")
           .responseSchema<any>("Employee")
           .get();
         expect.fail("Should throw error");
@@ -169,7 +169,7 @@ describe("BusinessApi", () => {
   describe("endpoint - post", () => {
     it("Throws error when url env is empty", () =>
       businessApi
-        .endpoint("NONEXISTENT_URL")
+        .call("NONEXISTENT_URL")
         .responseSchema("ChartSpec")
         .requestSchema("Nonexistent")
         .post({})
@@ -181,7 +181,7 @@ describe("BusinessApi", () => {
     it("Throws error when request definition is not found", () => {
       process.env.SERVICE_URL = "http://localhost/";
       return businessApi
-        .endpoint("SERVICE_URL")
+        .call("SERVICE_URL")
         .responseSchema("ChartSpec")
         .requestSchema("Nonexistent")
         .post({})
@@ -195,7 +195,7 @@ describe("BusinessApi", () => {
     it("Throws error when response definition is not found", () => {
       process.env.SERVICE_URL = "http://localhost/";
       return businessApi
-        .endpoint("SERVICE_URL")
+        .call("SERVICE_URL")
         .responseSchema("Nonexistent")
         .requestSchema("ChartSpec")
         .post({})
@@ -221,7 +221,7 @@ describe("BusinessApi", () => {
           })
         );
       const resp = await businessApi
-        .endpoint("SERVICE_URL_GET_EMPLOYEE")
+        .call("SERVICE_URL_GET_EMPLOYEE")
         .responseSchema<any>("Employee")
         .requestSchema("Employee")
         .post({
@@ -250,7 +250,7 @@ describe("BusinessApi", () => {
         );
       try {
         await businessApi
-          .endpoint("SERVICE_URL_GET_EMPLOYEE")
+          .call("SERVICE_URL_GET_EMPLOYEE")
           .responseSchema<any>("Employee")
           .requestSchema("Employee")
           .post({
@@ -282,7 +282,7 @@ describe("BusinessApi", () => {
         );
       try {
         await businessApi
-          .endpoint("SERVICE_URL_GET_EMPLOYEE")
+          .call("SERVICE_URL_GET_EMPLOYEE")
           .responseSchema<any>("Employee")
           .requestSchema("Employee")
           .post({
@@ -325,7 +325,7 @@ describe("BusinessApi", () => {
     );
   }
   function makeBusinessApi() {
-    return new BusinessApi({
+    return new BusinessApiHTTP({
       schemaPath: `${__dirname}/../mock/demo.schema.json`,
       silent: true,
     });
