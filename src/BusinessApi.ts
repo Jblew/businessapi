@@ -47,21 +47,6 @@ export class BusinessApi {
     };
   }
 
-  /*
-
-  apiServ
-  .handleGET("/dashboards/ceo")
-  .responseSchema("DashboardSpec")
-  .handle(() => {});
-
-apiServ
-  .handlePOST("/processes/complaint/complain")
-  .requestSchema("ComplaintSpec")
-  .responseSchema("GoodResponse")
-  .handle((body) => {});
-
-  */
-
   handleGET(url: string) {
     return {
       responseSchema: (responseDefinition: string) => ({
