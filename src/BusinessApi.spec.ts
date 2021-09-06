@@ -134,6 +134,7 @@ describe("BusinessApi", () => {
   function makeBusinessApi() {
     return new BusinessApi({
       schemaPath: `${__dirname}/../mock/demo.schema.json`,
+      silent: true,
     });
   }
 });

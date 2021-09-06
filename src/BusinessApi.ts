@@ -1,6 +1,7 @@
 import express from "express";
 import { AddressInfo } from "net";
 import { Schema } from "./Schema";
+import morgan from "morgan";
 export class BusinessApi {
   private app: express.Application;
   private schema: Schema;
@@ -13,7 +14,7 @@ export class BusinessApi {
   listen(): { close(): void; address(): string | null | AddressInfo } {
     const port = 80;
     const httpServer = this.app.listen(port, () => {
-      // console.log(`Listening at :${port}`);
+      if (!this.config.silent) console.log(`Listening at :${port}`);
     });
     return httpServer;
   }
@@ -40,6 +41,9 @@ export class BusinessApi {
   private makeExpressApp() {
     const app = express();
     app.use(express.json());
+    if (!this.config.silent) {
+      app.use(morgan("tiny"));
+    }
     return app;
   }
 
@@ -94,6 +98,7 @@ export class BusinessApi {
 
 export interface BusinessApiConfig {
   schemaPath: string;
+  silent?: boolean;
 }
 
 export interface GETCallConfig {
