@@ -30,9 +30,9 @@ export class BusinessApi {
             responseDefinition,
           });
         },
-        post: (body: any) => {
+        requestSchema: (requestDefinition: string) => {
           return {
-            requestSchema: (requestDefinition: string): Promise<RESPONSE> => {
+            post: (body: any): Promise<RESPONSE> => {
               return this.makeRequest<RESPONSE>({
                 method: "POST",
                 urlEnv,

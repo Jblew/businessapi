@@ -2,6 +2,7 @@ import { expect } from "chai";
 import request from "supertest";
 import { BusinessApi } from "./BusinessApi";
 import * as fs from "fs";
+import nock from "nock";
 
 describe("BusinessApi", () => {
   let businessApi: BusinessApi = makeBusinessApi();
@@ -90,20 +91,84 @@ describe("BusinessApi", () => {
     });
   });
 
-  function commonCallTests() {
-    it("Throws error when request definition is not found");
-    it("Throws error when response definition is not found");
-    it("Calls url specified by named env");
-    it("Throws error when response body is invalid against schema");
-  }
+  describe("endpoint - get", () => {
+    it("Throws error when response definition is not found", () =>
+      expect(() =>
+        businessApi
+          .endpoint("SERVICE_URL_NONEXISTENT")
+          .responseSchema("Nonexistent")
+          .get()
+      ).to.throw(/response definition/i));
 
-  describe("callPOST", () => {
-    commonCallTests();
-    it("Throws error when request data is invalid against schema");
+    it("Calls url specified by named env", async () => {
+      const serviceURL = "http://nock.test/get/employee";
+      process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
+      const interceptor = nock("http://nock.test")
+        .get("/get/employee")
+        .reply(
+          200,
+          JSON.stringify({
+            firstName: "a",
+            lastName: "b",
+            username: "c",
+            roles: [],
+          })
+        );
+      const resp = await businessApi
+        .endpoint("SERVICE_URL_GET_EMPLOYEE")
+        .responseSchema<any>("Employee")
+        .get();
+      expect(resp.firstName).to.equal("a");
+      expect(interceptor.isDone()).to.be.true;
+    });
+
+    it("Throws error when response body is invalid against schema", async () => {
+      const serviceURL = "http://nock.test/get/employee";
+      process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
+      const interceptor = nock("http://nock.test")
+        .get("/get/chart")
+        .reply(
+          200,
+          JSON.stringify({
+            firstName: "a",
+            lastName: "b",
+            username: "c",
+            roles: [],
+          })
+        );
+      try {
+        await businessApi
+          .endpoint("SERVICE_URL_GET_EMPLOYEE")
+          .responseSchema<any>("Employee")
+          .get();
+        expect.fail("Should throw error");
+      } catch (err) {
+        expect(err).to.match(/definition/i);
+      }
+      expect(interceptor.isDone()).to.be.true;
+    });
   });
 
-  describe("callGET", () => {
-    commonCallTests();
+  describe("endpoint - post", () => {
+    it("Throws error when response definition is not found", () =>
+      expect(() =>
+        businessApi
+          .endpoint("SERVICE_URL_NONEXISTENT")
+          .responseSchema("ChartSpec")
+          .requestSchema("Nonexistent")
+      ).to.throw(/request definition/i));
+
+    it("Throws error when request definition is not found", () =>
+      expect(() =>
+        businessApi
+          .endpoint("SERVICE_URL_NONEXISTENT")
+          .responseSchema("Nonexistent")
+          .get()
+      ).to.throw(/response definition/i));
+
+    it("Calls url specified by named env");
+    it("Throws error when response body is invalid against schema");
+    it("Throws error when request data is invalid against schema");
   });
 
   function commonHandleTests() {
