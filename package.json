@@ -1,6 +1,6 @@
 {
   "name": "@jblew/businessapi",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Helper library for hosting business logic api using JSON Schema",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,7 +18,8 @@
     "build": "tsc",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --exclude \"**/*.spec.ts\" --reporter=text --reporter=json-summary mocha --require ts-node/register \"src/**/*.spec.ts\"",
     "release:semantic": "semantic-release --no-ci -d false",
-    "release": "npm run build && npm run test && npm run release:semantic"
+    "release:commitversion": "git add package* && git commit -m \"chore: bump version\" && git push origin main",
+    "release": "npm run build && npm run test && npm run release:semantic && npm run release:commitversion"
   },
   "repository": {
     "type": "git",
