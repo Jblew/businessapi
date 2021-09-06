@@ -1,6 +1,6 @@
 {
-  "name": "businessapi",
-  "version": "0.0.0-development",
+  "name": "@jblew/businessapi",
+  "version": "1.0.0",
   "description": "Helper library for hosting business logic api using JSON Schema",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,12 +14,12 @@
   "scripts": {
     "build": "tsc",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --exclude \"**/*.spec.ts\" --reporter=text --reporter=json-summary mocha --require ts-node/register \"src/**/*.spec.ts\"",
-    "release:semantic": "semantic-release",
+    "release:semantic": "semantic-release --no-ci -d false",
     "release": "npm run build && npm run test && npm run release:semantic"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jblew/businessapi.git"
+    "url": "git+ssh://git@github.com/Jblew/businessapi.git"
   },
   "author": "Jędrzej JB Lewandowski",
   "license": "MIT",
@@ -48,5 +48,15 @@
     "express": "^4.17.1",
     "morgan": "^1.10.0",
     "ow": "^0.27.0"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/npm"
+    ]
   }
 }
