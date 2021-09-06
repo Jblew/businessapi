@@ -1,5 +1,5 @@
 import express from "express";
-import * as fs from "fs";
+import { AddressInfo } from "net";
 import { Schema } from "./Schema";
 export class BusinessApi {
   private app: express.Application;
@@ -10,16 +10,12 @@ export class BusinessApi {
     this.installDefaultHandlers();
   }
 
-  listen(): { close(): void } {
+  listen(): { close(): void; address(): string | null | AddressInfo } {
     const port = 80;
     const httpServer = this.app.listen(port, () => {
-      console.log(`Listening at :${port}`);
+      // console.log(`Listening at :${port}`);
     });
-    return {
-      close() {
-        httpServer.close();
-      },
-    };
+    return httpServer;
   }
 
   async callPOST<RESPONSE>(c: POSTCallConfig): Promise<RESPONSE> {
@@ -50,6 +46,9 @@ export class BusinessApi {
   private installDefaultHandlers() {
     this.app.get("/", (_, res) => {
       res.send("");
+    });
+    this.app.get("/schema", (_, res) => {
+      res.send(this.schema.getSchemaObject());
     });
   }
 }

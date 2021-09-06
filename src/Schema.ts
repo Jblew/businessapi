@@ -6,7 +6,7 @@ export class Schema {
   private ajv: Ajv;
 
   constructor(schemaPath: string) {
-    this.schema = this.loadSchema(schemaPath);
+    this.schema = Object.freeze(this.loadSchema(schemaPath));
     this.ajv = this.makeAjv(this.schema);
     if (!this.schema.definitions) {
       throw new Error("Malformed JSON schema: field definitions is missing");
@@ -24,6 +24,10 @@ export class Schema {
     const validator = this.ajv.getSchema(`#/definitions/${definitionName}`)!;
     const isValid = validator(data) as boolean;
     return isValid;
+  }
+
+  public getSchemaObject(): any {
+    return this.schema;
   }
 
   private loadSchema(schemaPath: string): unknown {

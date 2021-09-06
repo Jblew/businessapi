@@ -2,7 +2,6 @@ import { expect } from "chai";
 import request from "supertest";
 import { BusinessApi } from "./BusinessApi";
 import * as fs from "fs";
-import express from "express";
 
 describe("BusinessApi", () => {
   let businessApi: BusinessApi = makeBusinessApi();

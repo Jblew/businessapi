@@ -57,4 +57,11 @@ describe("Schema", () => {
       ).to.be.false;
     });
   });
+
+  describe("getSchemaObject", () => {
+    it("Returns schema object", () => {
+      const schema = new Schema(schemaPath);
+      expect(schema.getSchemaObject()).to.haveOwnProperty("$schema");
+    });
+  });
 });
