@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --reporter=text --reporter=json-summary mocha --require ts-node/register \"src/**/*.spec.ts\""
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --exclude \"**/*.spec.ts\" --reporter=text --reporter=json-summary mocha --require ts-node/register \"src/**/*.spec.ts\""
   },
   "repository": {
     "type": "git",
