@@ -54,12 +54,12 @@ export class Schema {
     const ourSchemaVerID = ourDefinition.properties?.SchemaVer?.["$id"];
     if (!theirSchemaVerId) {
       throw new TypeError(
-        "Your definition misses .properties.SchemaVer.id field (case sensitive)"
+        "Your definition misses .properties.SchemaVer.$id field (case sensitive)"
       );
     }
     if (!ourSchemaVerID) {
       throw new TypeError(
-        "Our definition misses .properties.SchemaVer.id field (case sensitive)"
+        "Our definition misses .properties.SchemaVer.$id field (case sensitive)"
       );
     }
     if (theirSchemaVerId !== ourSchemaVerID) {
