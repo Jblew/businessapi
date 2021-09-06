@@ -41,7 +41,7 @@ describe("Schema", () => {
           firstName: "User",
           lastName: "User",
           roles: [],
-        })
+        }).isValid
       ).to.be.true;
     });
 
@@ -53,7 +53,7 @@ describe("Schema", () => {
           firstName: "User",
           lastName: 5,
           roles: [],
-        })
+        }).isValid
       ).to.be.false;
     });
   });

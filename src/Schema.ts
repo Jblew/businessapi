@@ -18,13 +18,16 @@ export class Schema {
     return this.getDefinition(name) != undefined;
   }
 
-  public isValid(definitionName: string, data: unknown): boolean {
+  public isValid(
+    definitionName: string,
+    data: unknown
+  ): { isValid: boolean; error: string } {
     if (!this.hasDefinition(definitionName)) {
       throw new Error(`Missing definition ${definitionName}`);
     }
     const validator = this.ajv.getSchema(`#/definitions/${definitionName}`)!;
     const isValid = validator(data) as boolean;
-    return isValid;
+    return { isValid, error: `${validator.errors}` };
   }
 
   public getSchemaObject(): any {

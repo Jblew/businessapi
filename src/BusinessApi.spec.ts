@@ -92,13 +92,21 @@ describe("BusinessApi", () => {
   });
 
   describe("endpoint - get", () => {
-    it("Throws error when response definition is not found", () =>
+    it("Throws error when url env is empty", () => {
       expect(() =>
         businessApi
-          .endpoint("SERVICE_URL_NONEXISTENT")
-          .responseSchema("Nonexistent")
-          .get()
-      ).to.throw(/response definition/i));
+          .endpoint("NONEXISTENT_URL")
+          .responseSchema("ChartSpec")
+          .requestSchema("Nonexistent")
+      ).to.throw(/env does not exist/i);
+    });
+
+    it("Throws error when response definition is not found", () => {
+      process.env.SERVICE_URL = "http://localhost/";
+      expect(() =>
+        businessApi.endpoint("SERVICE_URL").responseSchema("Nonexistent").get()
+      ).to.throw(/response definition/i);
+    });
 
     it("Calls url specified by named env", async () => {
       const serviceURL = "http://nock.test/get/employee";
@@ -150,21 +158,31 @@ describe("BusinessApi", () => {
   });
 
   describe("endpoint - post", () => {
-    it("Throws error when response definition is not found", () =>
+    it("Throws error when url env is empty", () => {
       expect(() =>
         businessApi
-          .endpoint("SERVICE_URL_NONEXISTENT")
+          .endpoint("NONEXISTENT_URL")
           .responseSchema("ChartSpec")
           .requestSchema("Nonexistent")
-      ).to.throw(/request definition/i));
+      ).to.throw(/env does not exist/i);
+    });
 
-    it("Throws error when request definition is not found", () =>
+    it("Throws error when response definition is not found", () => {
+      process.env.SERVICE_URL = "http://localhost/";
       expect(() =>
         businessApi
-          .endpoint("SERVICE_URL_NONEXISTENT")
-          .responseSchema("Nonexistent")
-          .get()
-      ).to.throw(/response definition/i));
+          .endpoint("SERVICE_URL")
+          .responseSchema("ChartSpec")
+          .requestSchema("Nonexistent")
+      ).to.throw(/request definition/i);
+    });
+
+    it("Throws error when request definition is not found", () => {
+      process.env.SERVICE_URL = "http://localhost/";
+      expect(() =>
+        businessApi.endpoint("SERVICE_URL").responseSchema("Nonexistent").get()
+      ).to.throw(/response definition/i);
+    });
 
     it("Calls url specified by named env", async () => {
       const serviceURL = "http://nock.test/set/employee";
