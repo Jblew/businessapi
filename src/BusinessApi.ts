@@ -1,9 +1,25 @@
-import * as express from "express";
+import express from "express";
+import * as fs from "fs";
+import { Schema } from "./Schema";
 export class BusinessApi {
-  constructor(private config: BusinessApiConfig) {}
+  private app: express.Application;
+  private schema: Schema;
+  constructor(private config: BusinessApiConfig) {
+    this.schema = new Schema(config.schemaPath);
+    this.app = this.makeExpressApp();
+    this.installDefaultHandlers();
+  }
 
-  listen(): express.Application {
-    throw new Error("Not implemented yet");
+  listen(): { close(): void } {
+    const port = 80;
+    const httpServer = this.app.listen(port, () => {
+      console.log(`Listening at :${port}`);
+    });
+    return {
+      close() {
+        httpServer.close();
+      },
+    };
   }
 
   async callPOST<RESPONSE>(c: POSTCallConfig): Promise<RESPONSE> {
@@ -23,6 +39,18 @@ export class BusinessApi {
 
   handleGET(c: GETHandlerConfig, handler: () => Promise<unknown>) {
     throw new Error("Not implemented yet");
+  }
+
+  private makeExpressApp() {
+    const app = express();
+    app.use(express.json());
+    return app;
+  }
+
+  private installDefaultHandlers() {
+    this.app.get("/", (_, res) => {
+      res.send("");
+    });
   }
 }
 

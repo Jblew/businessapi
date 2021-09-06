@@ -2,24 +2,31 @@ import { expect } from "chai";
 import request from "supertest";
 import { BusinessApi } from "./BusinessApi";
 import * as fs from "fs";
+import express from "express";
 
 describe("BusinessApi", () => {
+  let businessApi: BusinessApi = makeBusinessApi();
+  let businessApiServer: { close(): void };
+  beforeEach(() => {
+    businessApi = makeBusinessApi();
+    businessApiServer = businessApi.listen();
+  });
+  afterEach(() => businessApiServer.close());
+
   describe("listen", () => {
     it("Serves blank page at root", async () => {
-      return request(makeBusinessApi().listen())
+      return request(businessApiServer)
         .get("/")
         .expect(200)
         .then((resp) => expect(resp.text).to.be.empty);
     });
 
     it("Responds with 404 on not found", async () => {
-      return request(makeBusinessApi().listen())
-        .get("/nonexistent")
-        .expect(404);
+      return request(businessApiServer).get("/nonexistent").expect(404);
     });
 
     it("Serves JSON schema at /schema", async () => {
-      return request(makeBusinessApi().listen())
+      return request(businessApiServer)
         .get("/schema")
         .expect(200)
         .then((resp) =>
@@ -29,7 +36,7 @@ describe("BusinessApi", () => {
 
     describe("Schema compatibility endpoint", () => {
       it("Responds with 400 on missing POST body", async () => {
-        return request(makeBusinessApi().listen())
+        return request(businessApiServer)
           .post(
             "/schema/is_definition_compatible?definition_name=AllEmployeesSpec"
           )
@@ -40,7 +47,7 @@ describe("BusinessApi", () => {
 
       it("Responds with 400 on missing definition name", async () => {
         const schema = getSchema();
-        return request(makeBusinessApi().listen())
+        return request(businessApiServer)
           .post("/schema/is_definition_compatible")
           .send(schema)
           .expect(400)
@@ -49,7 +56,7 @@ describe("BusinessApi", () => {
 
       it("Responds with 400 on wrong definition", async () => {
         const schema = getSchema();
-        return request(makeBusinessApi().listen())
+        return request(businessApiServer)
           .post("/schema/is_definition_compatible?definition_name=NonExistent")
           .send(schema)
           .expect(400)
@@ -58,7 +65,7 @@ describe("BusinessApi", () => {
 
       it("Responds with 200 when definitions are compatible", async () => {
         const schema = getSchema();
-        return request(makeBusinessApi().listen())
+        return request(businessApiServer)
           .post(
             "/schema/is_definition_compatible?definition_name=AllEmployeesSpec"
           )
@@ -71,7 +78,7 @@ describe("BusinessApi", () => {
         const schema = getSchema();
         schema.definitions.AllEmployeesSpec.properties.SchemaVer["$id"] =
           "0.1.0";
-        return request(makeBusinessApi().listen())
+        return request(businessApiServer)
           .post(
             "/schema/is_definition_compatible?definition_name=AllEmployeesSpec"
           )
@@ -118,13 +125,14 @@ describe("BusinessApi", () => {
   });
 
   /* HELPERS */
-  const schemaPath = `${__dirname}/../mock/demo.schema.json`;
   function getSchema() {
-    return JSON.parse(fs.readFileSync(schemaPath).toString());
+    return JSON.parse(
+      fs.readFileSync(`${__dirname}/../mock/demo.schema.json`).toString()
+    );
   }
   function makeBusinessApi() {
     return new BusinessApi({
-      schemaPath,
+      schemaPath: `${__dirname}/../mock/demo.schema.json`,
     });
   }
 });
