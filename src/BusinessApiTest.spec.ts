@@ -6,30 +6,42 @@ describe("BusinessApiTest", () => {
     firstName: "a",
     lastName: "b",
     username: "c",
-    rules: [],
+    roles: [],
   };
+  const validEmployeeResponse = { status: 200, data: validEmployee };
+
   describe("fakeService", () => {
-    it("Creates service that can be accessed via env name", () => {});
+    let businessApi: BusinessApiTest;
+    beforeEach(() => {
+      businessApi = new BusinessApiTest({
+        schemaPath: `${__dirname}/../mock/demo.schema.json`,
+        silent: true,
+      });
+    });
 
     it("Calls handler with GET method", async () => {
-      const test = new BusinessApiTest();
       const [request, response] = await Promise.all([
-        test.fakeService("SERVICE_URL_EMPLOYEE", async (_) => validEmployee),
-        test.call("SERVICE_URL_EMPLOYEE").responseSchema<any>("Employee").get(),
+        businessApi.fakeService(
+          "SERVICE_URL_EMPLOYEE",
+          async (_) => validEmployeeResponse
+        ),
+        businessApi
+          .call("SERVICE_URL_EMPLOYEE")
+          .responseSchema<any>("Employee")
+          .get(),
       ]);
       expect(request).to.be.undefined;
       expect(response.firstName).to.be.equal(validEmployee.firstName);
     });
 
     it("Passes POST body to the handler", async () => {
-      const test = new BusinessApiTest();
       let passedRequest: any;
       const [request, response] = await Promise.all([
-        test.fakeService("SERVICE_URL_EMPLOYEE", async (body: any) => {
+        businessApi.fakeService("SERVICE_URL_EMPLOYEE", async (body: any) => {
           passedRequest = body;
-          return validEmployee;
+          return validEmployeeResponse;
         }),
-        test
+        businessApi
           .call("SERVICE_URL_EMPLOYEE")
           .requestSchema<any>("Employee")
           .responseSchema<any>("Employee")

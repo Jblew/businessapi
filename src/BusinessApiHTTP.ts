@@ -5,8 +5,6 @@ import morgan from "morgan";
 import { installSchemaHandlers } from "./endpoints_schema";
 import axios from "axios";
 import { BusinessApi } from "./BusinessApi";
-import { makeRequest } from "./makeRequest";
-import { makeExpressHandler } from "./makeExpressHandler";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
 
 export class BusinessApiHTTP
