@@ -71,10 +71,10 @@ export class BusinessApiTest implements BusinessApi {
    * @param envName
    * @param handler
    */
-  fakeService<REQUEST, RESPONSE>(
+  async fakeService<REQUEST, RESPONSE>(
     envName: string,
     handler: (body: REQUEST) => Promise<RESPONSE>
-  ) {
+  ): Promise<REQUEST> {
     throw new Error("Not implemented yet");
   }
 
