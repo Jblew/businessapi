@@ -66,12 +66,30 @@ export class BusinessApiTest implements BusinessApi {
     };
   }
 
-  mockService() {
-    throw new Error("Not specified yet");
+  /**
+   * Creates fake service that can be called directly using call()
+   * @param envName
+   * @param handler
+   */
+  fakeService<REQUEST, RESPONSE>(
+    envName: string,
+    handler: (body: REQUEST) => Promise<RESPONSE>
+  ) {
+    throw new Error("Not implemented yet");
   }
 
-  mockCall() {
-    throw new Error("Not specified yet");
+  /**
+   * Calls local endpoint handler
+   */
+  fakeCall(url: string) {
+    return {
+      get: <RESPONSE>(): Promise<RESPONSE> => {
+        throw new Error("Not specified yet");
+      },
+      post: <REQUEST, RESPONSE>(body: REQUEST): Promise<RESPONSE> => {
+        throw new Error("Not specified yet");
+      },
+    };
   }
 
   private async makeRequest<R>(r: {
@@ -94,3 +112,6 @@ export class BusinessApiTest implements BusinessApi {
     throw new Error("Not implemented yet");
   }
 }
+
+// TODO share code between BusinessApi and BusinessApiTest (e.g. schema validation)
+// Perhaps make abstract common class BusinessApiCommon and make the two extend from it
