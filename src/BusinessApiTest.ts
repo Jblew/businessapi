@@ -21,19 +21,19 @@ export class BusinessApiTest implements BusinessApi {
             responseDefinition,
           });
         },
-        requestSchema: <REQUEST>(requestDefinition: string) => {
-          return {
-            post: (body: REQUEST): Promise<RESPONSE> => {
-              return this.makeRequest<RESPONSE>({
-                method: "POST",
-                urlEnv,
-                responseDefinition,
-                requestDefinition,
-                body,
-              });
-            },
-          };
-        },
+      }),
+      requestSchema: <REQUEST>(requestDefinition: string) => ({
+        responseSchema: <RESPONSE>(responseDefinition: string) => ({
+          post: (body: REQUEST): Promise<RESPONSE> => {
+            return this.makeRequest<RESPONSE>({
+              method: "POST",
+              urlEnv,
+              responseDefinition,
+              requestDefinition,
+              body,
+            });
+          },
+        }),
       }),
     };
   }
@@ -49,7 +49,9 @@ export class BusinessApiTest implements BusinessApi {
             handler,
           });
         },
-        requestSchema: <REQUEST>(requestDefinition: string) => ({
+      }),
+      requestSchema: <REQUEST>(requestDefinition: string) => ({
+        responseSchema: <RESPONSE>(responseDefinition: string) => ({
           post: (handler: (body: REQUEST) => Promise<RESPONSE>) => {
             this.installHandler({
               method: "POST",

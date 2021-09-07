@@ -163,8 +163,8 @@ describe("BusinessApiHTTP", () => {
     it("Throws error when url env is empty", () =>
       businessApi
         .call("NONEXISTENT_URL")
-        .responseSchema("Chart")
         .requestSchema("Nonexistent")
+        .responseSchema("Chart")
         .post({})
         .then(
           () => expect.fail("Should fail"),
@@ -175,8 +175,8 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL = "http://localhost/";
       return businessApi
         .call("SERVICE_URL")
-        .responseSchema("Chart")
         .requestSchema("Nonexistent")
+        .responseSchema("Chart")
         .post({})
         .then(
           () => expect.fail("Should fail"),
@@ -189,8 +189,8 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL = "http://localhost/";
       return businessApi
         .call("SERVICE_URL")
-        .responseSchema("Nonexistent")
         .requestSchema("Chart")
+        .responseSchema("Nonexistent")
         .post({})
         .then(
           () => expect.fail("Should fail"),
@@ -207,8 +207,8 @@ describe("BusinessApiHTTP", () => {
         .reply(200, JSON.stringify(validEmployee));
       const resp = await businessApi
         .call("SERVICE_URL_GET_EMPLOYEE")
-        .responseSchema<any>("Employee")
         .requestSchema("Employee")
+        .responseSchema<any>("Employee")
         .post(validEmployee);
       expect(resp.firstName).to.equal("a");
       expect(interceptor.isDone()).to.be.true;
@@ -223,8 +223,8 @@ describe("BusinessApiHTTP", () => {
       try {
         await businessApi
           .call("SERVICE_URL_GET_EMPLOYEE")
-          .responseSchema<any>("Employee")
           .requestSchema("Employee")
+          .responseSchema<any>("Employee")
           .post(validEmployee);
         expect.fail("Should throw error");
       } catch (err) {
@@ -241,8 +241,8 @@ describe("BusinessApiHTTP", () => {
         .reply(200, JSON.stringify(validEmployee));
       await businessApi
         .call("SERVICE_URL_GET_EMPLOYEE")
-        .responseSchema<any>("Employee")
         .requestSchema("Employee")
+        .responseSchema<any>("Employee")
         .post(invalidEmployee)
         .then(
           () => expect.fail("Should throw error"),
@@ -313,16 +313,16 @@ describe("BusinessApiHTTP", () => {
       expect(() =>
         businessApi
           .handle("/")
-          .responseSchema("Employee")
           .requestSchema("NonExistentSchema")
+          .responseSchema("Employee")
           .post(async (_) => ({}))
       ).to.throw(/request schema definition.*NonExistentSchema.*not found/i));
 
     it("Responds with 409 when request body is invalid against schema", async () => {
       await businessApi
         .handle("/test")
-        .responseSchema("Employee")
         .requestSchema("Employee")
+        .responseSchema("Employee")
         .post(async () => validEmployee);
       const resp = await axios.post(
         `http://localhost:${port}/test`,
@@ -336,8 +336,8 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 200 when handler is resolved", async () => {
       await businessApi
         .handle("/test")
-        .responseSchema("Employee")
         .requestSchema("Employee")
+        .responseSchema("Employee")
         .post(async () => validEmployee);
       const resp = await axios.post(
         `http://localhost:${port}/test`,
@@ -352,8 +352,8 @@ describe("BusinessApiHTTP", () => {
       let receivedBody: any;
       await businessApi
         .handle("/test")
-        .responseSchema("Employee")
         .requestSchema("Employee")
+        .responseSchema("Employee")
         .post(async (body) => {
           receivedBody = body;
           return validEmployee;
@@ -370,8 +370,8 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 500 when handler response is invalid against schema", async () => {
       await businessApi
         .handle("/test")
-        .responseSchema("Employee")
         .requestSchema("Employee")
+        .responseSchema("Employee")
         .post(async () => invalidEmployee);
       const resp = await axios.post(
         `http://localhost:${port}/test`,
@@ -384,8 +384,8 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 500 when handler is rejected", async () => {
       await businessApi
         .handle("/test")
-        .responseSchema("Employee")
         .requestSchema("Employee")
+        .responseSchema("Employee")
         .post(async () => Promise.reject(new Error("Some error")));
       const resp = await axios.post(
         `http://localhost:${port}/test`,

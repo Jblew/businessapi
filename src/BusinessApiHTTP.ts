@@ -36,20 +36,20 @@ export class BusinessApiHTTP implements BusinessApi {
             responseDefinition,
           });
         },
-        requestSchema: <REQUEST>(requestDefinition: string) => {
-          return {
-            post: (body: REQUEST): Promise<RESPONSE> => {
-              return makeRequest<RESPONSE>({
-                schema: this.schema,
-                method: "POST",
-                urlEnv,
-                responseDefinition,
-                requestDefinition,
-                body,
-              });
-            },
-          };
-        },
+      }),
+      requestSchema: <REQUEST>(requestDefinition: string) => ({
+        responseSchema: <RESPONSE>(responseDefinition: string) => ({
+          post: (body: REQUEST): Promise<RESPONSE> => {
+            return makeRequest<RESPONSE>({
+              schema: this.schema,
+              method: "POST",
+              urlEnv,
+              responseDefinition,
+              requestDefinition,
+              body,
+            });
+          },
+        }),
       }),
     };
   }
@@ -65,7 +65,9 @@ export class BusinessApiHTTP implements BusinessApi {
             handler,
           });
         },
-        requestSchema: <REQUEST>(requestDefinition: string) => ({
+      }),
+      requestSchema: <REQUEST>(requestDefinition: string) => ({
+        responseSchema: <RESPONSE>(responseDefinition: string) => ({
           post: (handler: (body: REQUEST) => Promise<RESPONSE>) => {
             this.installHandler({
               method: "POST",
