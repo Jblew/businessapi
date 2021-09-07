@@ -5,6 +5,8 @@ import morgan from "morgan";
 import { installSchemaHandlers } from "./endpoints_schema";
 import axios from "axios";
 import { BusinessApi } from "./BusinessApi";
+import { makeRequest } from "./makeRequest";
+import { makeExpressHandler } from "./makeExpressHandler";
 
 export class BusinessApiHTTP implements BusinessApi {
   private app: express.Application;
@@ -16,7 +18,7 @@ export class BusinessApiHTTP implements BusinessApi {
   }
 
   listen(): { close(): void; address(): string | null | AddressInfo } {
-    const port = 80;
+    const port = this.config.port || 80;
     const httpServer = this.app.listen(port, () => {
       if (!this.config.silent) console.log(`Listening at :${port}`);
     });
@@ -27,7 +29,8 @@ export class BusinessApiHTTP implements BusinessApi {
     return {
       responseSchema: <RESPONSE>(responseDefinition: string) => ({
         get: (): Promise<RESPONSE> => {
-          return this.makeRequest<RESPONSE>({
+          return makeRequest<RESPONSE>({
+            schema: this.schema,
             method: "GET",
             urlEnv,
             responseDefinition,
@@ -36,7 +39,8 @@ export class BusinessApiHTTP implements BusinessApi {
         requestSchema: <REQUEST>(requestDefinition: string) => {
           return {
             post: (body: REQUEST): Promise<RESPONSE> => {
-              return this.makeRequest<RESPONSE>({
+              return makeRequest<RESPONSE>({
+                schema: this.schema,
                 method: "POST",
                 urlEnv,
                 responseDefinition,
@@ -90,17 +94,13 @@ export class BusinessApiHTTP implements BusinessApi {
     installSchemaHandlers(this.app, this.schema);
   }
 
-  private async makeRequest<R>(r: {
+  private installHandler(r: {
     method: "POST" | "GET";
-    urlEnv: string;
+    url: string;
     responseDefinition: string;
     requestDefinition?: string;
-    body?: any;
-  }): Promise<R> {
-    const url = process.env[r.urlEnv];
-    if (!url) {
-      throw new TypeError(`Env ${r.urlEnv} does not exist`);
-    }
+    handler: (body?: any) => Promise<any>;
+  }) {
     if (!this.schema.hasDefinition(r.responseDefinition)) {
       throw new TypeError(
         `Response schema definition ${r.responseDefinition} not found`
@@ -114,71 +114,25 @@ export class BusinessApiHTTP implements BusinessApi {
         `Request schema definition ${r.requestDefinition} not found`
       );
     }
-
-    if (r.method === "POST" && (!r.body || typeof r.body != "object")) {
-      throw new TypeError(`When method is POST, body must be an object`);
-    }
-
-    if (r.method === "POST") {
-      if (!r.requestDefinition) {
-        throw new TypeError(
-          `When method is POST, requestDefinition must be specified`
-        );
-      }
-      const { isValid, error } = this.schema.isValid(
-        r.requestDefinition!,
-        r.body
-      );
-      if (!isValid) {
-        throw new Error(
-          `Request body is not valid against schema ${r.requestDefinition}: ${error}`
-        );
-      }
-    }
-
-    const resp = await axios({
-      method: r.method,
-      url,
-      data: r.body,
-      validateStatus: () => true,
+    const handler = makeExpressHandler({
+      responseBodyValidator: (body) =>
+        this.schema.isValid(r.responseDefinition, body),
+      requestBodyValidator: r.requestDefinition
+        ? (body) => this.schema.isValid(r.requestDefinition!, body)
+        : undefined,
+      handler: r.handler,
+      silent: this.config.silent,
     });
-    if (resp.status !== 200) {
-      let error = "(no error field in response)";
-      if (
-        resp.data &&
-        typeof resp.data === "object" &&
-        resp.data !== null &&
-        !!resp.data.error
-      ) {
-        error = `${resp.data.error}`.substring(0, 300);
-      }
-      throw new Error(`Request failed (status=${resp.status}): ${error}`);
+    if (r.method === "POST") {
+      this.app.post(r.url, handler);
+    } else {
+      this.app.get(r.url, handler);
     }
-    if (!(resp.data && typeof resp.data === "object" && resp.data !== null)) {
-      throw new Error("Response should be an object");
-    }
-    const body = resp.data;
-    const { isValid, error } = this.schema.isValid(r.responseDefinition, body);
-    if (!isValid) {
-      throw new Error(
-        `Response is not valid against schema ${r.responseDefinition}: ${error}`
-      );
-    }
-    return body;
-  }
-
-  private async installHandler<R>(r: {
-    method: "POST" | "GET";
-    url: string;
-    responseDefinition: string;
-    requestDefinition?: string;
-    handler: (body?: any) => Promise<any>;
-  }): Promise<R> {
-    throw new Error("Not implemented yet");
   }
 }
 
 export interface BusinessApiConfig {
   schemaPath: string;
   silent?: boolean;
+  port?: number;
 }

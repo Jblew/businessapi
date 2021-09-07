@@ -30,7 +30,7 @@ export class Schema {
     let error = "";
     if (!isValid) {
       error =
-        `${validator.errors?.[0].instancePath} ${validator.errors?.[0].message}`.substring(
+        `${validator.errors?.[0].instancePath} ${validator.errors?.[0].message} (definition ${definitionName})`.substring(
           0,
           200
         );

@@ -3,6 +3,10 @@ import request from "supertest";
 import { BusinessApiHTTP } from "./BusinessApiHTTP";
 import * as fs from "fs";
 import nock from "nock";
+import axios from "axios";
+import { getRandomInt } from "./util";
+
+const port = getRandomInt(4000, 6000);
 
 describe("BusinessApiHTTP", () => {
   let businessApi: BusinessApiHTTP = makeBusinessApi();
@@ -292,23 +296,95 @@ describe("BusinessApiHTTP", () => {
     });
   });
 
-  function commonHandleTests() {
-    it("Throws error when request definition is not found");
-    it("Throws error when response definition is not found");
-    it("Responds with 200 when handler is resolved");
-    it("Responds with 404 on not found");
-    it("Responds with 500 when handler response is invalid against schema");
-    it("Responds with 500 when handler throws");
-    it("Responds with 500 when handler is rejected");
-  }
+  describe("handle - get", () => {
+    it("Throws error when response definition is not found", () =>
+      expect(() =>
+        businessApi
+          .handle("/")
+          .responseSchema("NonExistentSchema")
+          .get(async () => ({}))
+      ).to.throw(TypeError));
 
-  describe("handlePOST", () => {
-    commonHandleTests();
-    it("Responds with 409 when request body is invalid against schema");
+    it("Responds with 200 when handler is resolved", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .get(async () => ({
+          username: "a",
+          firstName: "b",
+          lastName: "c",
+          roles: [],
+        }));
+      const resp = await axios.get(`http://localhost:${port}/test`, {
+        validateStatus: () => true,
+      });
+      expect(resp.status).to.equal(200);
+      expect(resp.data.username).to.equal("a");
+    });
+
+    it("Responds with 404 on not found", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .get(async () => ({
+          username: "a",
+          firstName: "b",
+          lastName: "c",
+          roles: [],
+        }));
+      const resp = await axios.get(`http://localhost:${port}/nonexistent`, {
+        validateStatus: () => true,
+      });
+      expect(resp.status).to.equal(404);
+    });
+
+    it("Responds with 500 when handler response is invalid against schema", async () => {
+      await businessApi
+        .handle("/testInvalid")
+        .responseSchema("Employee")
+        .get(async () => ({
+          username: "a",
+          firstName: "b",
+          lastName: 5,
+          roles: [],
+        }));
+      const resp = await axios.get(`http://localhost:${port}/testInvalid`, {
+        validateStatus: () => true,
+      });
+      expect(resp.status).to.equal(500);
+    });
+
+    it("Responds with 500 when handler is rejected", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .get(async () => Promise.reject(new Error("Some error")));
+      const resp = await axios.get(`http://localhost:${port}/test`, {
+        validateStatus: () => true,
+      });
+      expect(resp.status).to.equal(500);
+    });
   });
 
-  describe("handleGET", () => {
-    commonHandleTests();
+  describe("handle - post", () => {
+    it("Throws error when request definition is not found", () =>
+      expect(() =>
+        businessApi
+          .handle("/")
+          .responseSchema("Employee")
+          .requestSchema("NonExistentSchema")
+          .post(async (_) => ({}))
+      ).to.throw(/request schema definition.*NonExistentSchema.*not found/i));
+
+    it("Responds with 409 when request body is invalid against schema");
+
+    it("Responds with 200 when handler is resolved");
+
+    it("Responds with 500 when handler response is invalid against schema");
+
+    it("Responds with 500 when handler throws");
+
+    it("Responds with 500 when handler is rejected");
   });
 
   /* HELPERS */
@@ -321,6 +397,7 @@ describe("BusinessApiHTTP", () => {
     return new BusinessApiHTTP({
       schemaPath: `${__dirname}/../mock/demo.schema.json`,
       silent: true,
+      port,
     });
   }
 });
