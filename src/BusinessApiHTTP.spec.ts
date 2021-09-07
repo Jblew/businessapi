@@ -30,16 +30,14 @@ describe("BusinessApiHTTP", () => {
         .get("/schema")
         .expect(200)
         .then((resp) =>
-          expect(resp.body.definitions).to.haveOwnProperty("AllEmployeesSpec")
+          expect(resp.body.definitions).to.haveOwnProperty("AllEmployees")
         );
     });
 
     describe("Schema compatibility endpoint", () => {
       it("Responds with 400 on missing POST body", async () => {
         return request(businessApiServer)
-          .post(
-            "/schema/is_definition_compatible?definition_name=AllEmployeesSpec"
-          )
+          .post("/schema/is_definition_compatible?definition_name=AllEmployees")
           .send()
           .expect(400)
           .then((resp) => expect(resp.body.error).to.be.string);
@@ -66,9 +64,7 @@ describe("BusinessApiHTTP", () => {
       it("Responds with 200 when definitions are compatible", async () => {
         const schema = getSchema();
         return request(businessApiServer)
-          .post(
-            "/schema/is_definition_compatible?definition_name=AllEmployeesSpec"
-          )
+          .post("/schema/is_definition_compatible?definition_name=AllEmployees")
           .send(schema)
           .expect(200)
           .then((resp) => expect(resp.body.ok).to.be.true);
@@ -76,12 +72,9 @@ describe("BusinessApiHTTP", () => {
 
       it("Responds with 409 when definitions are incompatible", async () => {
         const schema = getSchema();
-        schema.definitions.AllEmployeesSpec.properties.SchemaVer["$id"] =
-          "0.1.0";
+        schema.definitions.AllEmployees.properties.SchemaVer.enum[0] = "0.1.0";
         return request(businessApiServer)
-          .post(
-            "/schema/is_definition_compatible?definition_name=AllEmployeesSpec"
-          )
+          .post("/schema/is_definition_compatible?definition_name=AllEmployees")
           .send(schema)
           .expect(409)
           .then((resp) => {
@@ -95,7 +88,7 @@ describe("BusinessApiHTTP", () => {
     it("Throws error when url env is empty", () =>
       businessApi
         .call("NONEXISTENT_URL")
-        .responseSchema("ChartSpec")
+        .responseSchema("Chart")
         .get()
         .then(
           () => expect.fail("Should fail"),
@@ -170,7 +163,7 @@ describe("BusinessApiHTTP", () => {
     it("Throws error when url env is empty", () =>
       businessApi
         .call("NONEXISTENT_URL")
-        .responseSchema("ChartSpec")
+        .responseSchema("Chart")
         .requestSchema("Nonexistent")
         .post({})
         .then(
@@ -182,7 +175,7 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL = "http://localhost/";
       return businessApi
         .call("SERVICE_URL")
-        .responseSchema("ChartSpec")
+        .responseSchema("Chart")
         .requestSchema("Nonexistent")
         .post({})
         .then(
@@ -197,7 +190,7 @@ describe("BusinessApiHTTP", () => {
       return businessApi
         .call("SERVICE_URL")
         .responseSchema("Nonexistent")
-        .requestSchema("ChartSpec")
+        .requestSchema("Chart")
         .post({})
         .then(
           () => expect.fail("Should fail"),
@@ -261,12 +254,12 @@ describe("BusinessApiHTTP", () => {
           });
         expect.fail("Should throw error");
       } catch (err) {
-        expect(err).to.match(/response definition/i);
+        expect(err).to.match(/response is not valid.* Employee.*username/i);
       }
       expect(interceptor.isDone()).to.be.true;
     });
 
-    it("Throws error when request data is invalid against schema", async () => {
+    it.only("Throws error when request data is invalid against schema", async () => {
       const serviceURL = "http://nock.test/set/employee";
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
@@ -280,22 +273,21 @@ describe("BusinessApiHTTP", () => {
             roles: [],
           })
         );
-      try {
-        await businessApi
-          .call("SERVICE_URL_GET_EMPLOYEE")
-          .responseSchema<any>("Employee")
-          .requestSchema("Employee")
-          .post({
-            firstName: "a",
-            lastName: "b",
-            username: 5,
-            roles: [],
-          });
-        expect.fail("Should throw error");
-      } catch (err) {
-        expect(err).to.match(/invalid request/i);
-      }
-      expect(interceptor.isDone()).to.be.true;
+      return await businessApi
+        .call("SERVICE_URL_GET_EMPLOYEE")
+        .responseSchema<any>("Employee")
+        .requestSchema("Employee")
+        .post({
+          firstName: "a",
+          lastName: "b",
+          username: 5,
+          roles: [],
+        })
+        .then(
+          () => expect.fail("Should throw error"),
+          (err) => expect(err).to.match(/invalid request/i)
+        )
+        .then(() => expect(interceptor.isDone()).to.be.eq(false));
     });
   });
 

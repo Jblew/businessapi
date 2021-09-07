@@ -2,29 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "AllEmployees": {
-      "items": {
-        "$ref": "#/definitions/Employee"
-      },
-      "type": "array"
-    },
-    "AllEmployeesSpec": {
       "properties": {
         "SchemaVer": {
-          "$id": "1.0.0",
-          "properties": {
-            "addition": {
-              "type": "number"
-            },
-            "model": {
-              "enum": [1],
-              "type": "number"
-            },
-            "revision": {
-              "minimum": 0,
-              "type": "number"
-            }
-          },
-          "type": "object"
+          "enum": ["3.0.0"],
+          "type": "string"
         },
         "allEmployees": {
           "items": {
@@ -33,9 +14,10 @@
           "type": "array"
         }
       },
+      "required": ["allEmployees"],
       "type": "object"
     },
-    "Chart": {
+    "AnyChart": {
       "anyOf": [
         {
           "$ref": "#/definitions/PieChart"
@@ -45,24 +27,11 @@
         }
       ]
     },
-    "ChartSpec": {
+    "Chart": {
       "properties": {
         "SchemaVer": {
-          "$id": "2.0.0",
-          "properties": {
-            "addition": {
-              "type": "number"
-            },
-            "model": {
-              "enum": [2],
-              "type": "number"
-            },
-            "revision": {
-              "minimum": 0,
-              "type": "number"
-            }
-          },
-          "type": "object"
+          "enum": ["4.0.0"],
+          "type": "string"
         },
         "chart": {
           "anyOf": [
@@ -75,10 +44,15 @@
           ]
         }
       },
+      "required": ["chart"],
       "type": "object"
     },
     "CompanyStructure": {
       "properties": {
+        "SchemaVer": {
+          "enum": ["3.0.0"],
+          "type": "string"
+        },
         "anchor": {
           "$ref": "#/definitions/Role"
         },
@@ -89,31 +63,7 @@
           "type": "string"
         }
       },
-      "type": "object"
-    },
-    "CompanyStructureSpec": {
-      "properties": {
-        "SchemaVer": {
-          "$id": "1.3.1",
-          "properties": {
-            "addition": {
-              "type": "number"
-            },
-            "model": {
-              "enum": [1],
-              "type": "number"
-            },
-            "revision": {
-              "minimum": 3,
-              "type": "number"
-            }
-          },
-          "type": "object"
-        },
-        "companyStructure": {
-          "$ref": "#/definitions/CompanyStructure"
-        }
-      },
+      "required": ["anchor", "mtp", "name"],
       "type": "object"
     },
     "Employee": {
@@ -134,6 +84,7 @@
           "type": "string"
         }
       },
+      "required": ["firstName", "lastName", "roles", "username"],
       "type": "object"
     },
     "LabeledPartitionChartValue": {
@@ -148,6 +99,7 @@
           "type": "number"
         }
       },
+      "required": ["label", "value"],
       "type": "object"
     },
     "PieChart": {
@@ -163,6 +115,7 @@
           "type": "array"
         }
       },
+      "required": ["type", "values"],
       "type": "object"
     },
     "Process": {
@@ -177,6 +130,7 @@
           "type": "string"
         }
       },
+      "required": ["mermaid", "name", "purpose"],
       "type": "object"
     },
     "ProgressBar": {
@@ -192,6 +146,7 @@
           "$ref": "#/definitions/LabeledPartitionChartValue"
         }
       },
+      "required": ["title", "type", "values"],
       "type": "object"
     },
     "Role": {
@@ -227,6 +182,7 @@
           "type": "array"
         }
       },
+      "required": ["accountabilities", "domains", "name", "purpose"],
       "type": "object"
     }
   }

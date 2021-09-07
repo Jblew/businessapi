@@ -81,7 +81,10 @@ describe("Schema", () => {
       const ourSchema = new Schema(schemaPath);
       const theirSchema = new Schema(schemaPath);
       expect(() =>
-        ourSchema.isDefinitionCompatible("Chart", theirSchema.getSchemaObject())
+        ourSchema.isDefinitionCompatible(
+          "PieChart",
+          theirSchema.getSchemaObject()
+        )
       ).to.throw(TypeError);
     });
 
@@ -89,10 +92,7 @@ describe("Schema", () => {
       const ourSchema = new Schema(schemaPath);
       const theirSchema = new Schema(schemaPath);
       expect(
-        ourSchema.isDefinitionCompatible(
-          "ChartSpec",
-          theirSchema.getSchemaObject()
-        )
+        ourSchema.isDefinitionCompatible("Chart", theirSchema.getSchemaObject())
       ).to.be.equal(true);
     });
 
@@ -100,10 +100,10 @@ describe("Schema", () => {
       const ourSchema = new Schema(schemaPath);
       const theirSchema = new Schema(schemaPath);
       const theirSchemaObject = theirSchema.getSchemaObject();
-      theirSchemaObject.definitions.ChartSpec.properties.SchemaVer.$id =
+      theirSchemaObject.definitions.Chart.properties.SchemaVer.enum[0] =
         "0.1.0";
       expect(
-        ourSchema.isDefinitionCompatible("ChartSpec", theirSchemaObject)
+        ourSchema.isDefinitionCompatible("Chart", theirSchemaObject)
       ).to.be.equal(false);
     });
   });
