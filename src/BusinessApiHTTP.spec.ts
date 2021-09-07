@@ -7,6 +7,18 @@ import axios from "axios";
 import { getRandomInt } from "./util";
 
 const port = getRandomInt(4000, 6000);
+const validEmployee = {
+  firstName: "a",
+  lastName: "b",
+  username: "c",
+  roles: [],
+};
+const invalidEmployee = {
+  firstName: "a",
+  lastName: "b",
+  username: 5,
+  roles: [],
+};
 
 describe("BusinessApiHTTP", () => {
   let businessApi: BusinessApiHTTP = makeBusinessApi();
@@ -117,15 +129,7 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
         .get("/get/employee")
-        .reply(
-          200,
-          JSON.stringify({
-            firstName: "a",
-            lastName: "b",
-            username: "c",
-            roles: [],
-          })
-        );
+        .reply(200, JSON.stringify(validEmployee));
       const resp = await businessApi
         .call("SERVICE_URL_GET_EMPLOYEE")
         .responseSchema<any>("Employee")
@@ -139,15 +143,7 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
         .get("/get/employee")
-        .reply(
-          200,
-          JSON.stringify({
-            firstName: "a",
-            lastName: "b",
-            username: 1,
-            roles: [],
-          })
-        );
+        .reply(200, JSON.stringify(invalidEmployee));
       try {
         await businessApi
           .call("SERVICE_URL_GET_EMPLOYEE")
@@ -208,25 +204,12 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
         .post("/set/employee")
-        .reply(
-          200,
-          JSON.stringify({
-            firstName: "a",
-            lastName: "b",
-            username: "c",
-            roles: [],
-          })
-        );
+        .reply(200, JSON.stringify(validEmployee));
       const resp = await businessApi
         .call("SERVICE_URL_GET_EMPLOYEE")
         .responseSchema<any>("Employee")
         .requestSchema("Employee")
-        .post({
-          firstName: "a",
-          lastName: "b",
-          username: "c",
-          roles: [],
-        });
+        .post(validEmployee);
       expect(resp.firstName).to.equal("a");
       expect(interceptor.isDone()).to.be.true;
     });
@@ -236,26 +219,13 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
         .post("/set/employee")
-        .reply(
-          200,
-          JSON.stringify({
-            firstName: "a",
-            lastName: "b",
-            username: 5,
-            roles: [],
-          })
-        );
+        .reply(200, JSON.stringify(invalidEmployee));
       try {
         await businessApi
           .call("SERVICE_URL_GET_EMPLOYEE")
           .responseSchema<any>("Employee")
           .requestSchema("Employee")
-          .post({
-            firstName: "a",
-            lastName: "b",
-            username: "c",
-            roles: [],
-          });
+          .post(validEmployee);
         expect.fail("Should throw error");
       } catch (err) {
         expect(err).to.match(/response is not valid.* Employee.*username/i);
@@ -268,31 +238,18 @@ describe("BusinessApiHTTP", () => {
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
         .post("/set/employee")
-        .reply(
-          200,
-          JSON.stringify({
-            firstName: "a",
-            lastName: "b",
-            username: "c",
-            roles: [],
-          })
-        );
-      return await businessApi
+        .reply(200, JSON.stringify(validEmployee));
+      await businessApi
         .call("SERVICE_URL_GET_EMPLOYEE")
         .responseSchema<any>("Employee")
         .requestSchema("Employee")
-        .post({
-          firstName: "a",
-          lastName: "b",
-          username: 5,
-          roles: [],
-        })
+        .post(invalidEmployee)
         .then(
           () => expect.fail("Should throw error"),
           (err) =>
             expect(err).to.match(/Request.*not valid.*Employee.*username/i)
-        )
-        .then(() => expect(interceptor.isDone()).to.be.eq(false));
+        );
+      expect(interceptor.isDone()).to.be.eq(false);
     });
   });
 
@@ -309,29 +266,19 @@ describe("BusinessApiHTTP", () => {
       await businessApi
         .handle("/test")
         .responseSchema("Employee")
-        .get(async () => ({
-          username: "a",
-          firstName: "b",
-          lastName: "c",
-          roles: [],
-        }));
+        .get(async () => validEmployee);
       const resp = await axios.get(`http://localhost:${port}/test`, {
         validateStatus: () => true,
       });
       expect(resp.status).to.equal(200);
-      expect(resp.data.username).to.equal("a");
+      expect(resp.data.username).to.equal(validEmployee.username);
     });
 
     it("Responds with 404 on not found", async () => {
       await businessApi
         .handle("/test")
         .responseSchema("Employee")
-        .get(async () => ({
-          username: "a",
-          firstName: "b",
-          lastName: "c",
-          roles: [],
-        }));
+        .get(async () => validEmployee);
       const resp = await axios.get(`http://localhost:${port}/nonexistent`, {
         validateStatus: () => true,
       });
@@ -342,12 +289,7 @@ describe("BusinessApiHTTP", () => {
       await businessApi
         .handle("/testInvalid")
         .responseSchema("Employee")
-        .get(async () => ({
-          username: "a",
-          firstName: "b",
-          lastName: 5,
-          roles: [],
-        }));
+        .get(async () => invalidEmployee);
       const resp = await axios.get(`http://localhost:${port}/testInvalid`, {
         validateStatus: () => true,
       });
@@ -376,15 +318,82 @@ describe("BusinessApiHTTP", () => {
           .post(async (_) => ({}))
       ).to.throw(/request schema definition.*NonExistentSchema.*not found/i));
 
-    it("Responds with 409 when request body is invalid against schema");
+    it("Responds with 409 when request body is invalid against schema", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .requestSchema("Employee")
+        .post(async () => validEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        invalidEmployee,
+        { validateStatus: () => true }
+      );
+      expect(resp.status).to.equal(409);
+      expect(resp.data.error).to.match(/username/i);
+    });
 
-    it("Responds with 200 when handler is resolved");
+    it("Responds with 200 when handler is resolved", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .requestSchema("Employee")
+        .post(async () => validEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true }
+      );
+      expect(resp.status).to.equal(200);
+      expect(resp.data.username).to.equal(validEmployee.username);
+    });
 
-    it("Responds with 500 when handler response is invalid against schema");
+    it("Passes valid request body to the handler", async () => {
+      let receivedBody: any;
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .requestSchema("Employee")
+        .post(async (body) => {
+          receivedBody = body;
+          return validEmployee;
+        });
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        { ...validEmployee, lastName: "X" },
+        { validateStatus: () => true }
+      );
+      expect(resp.status).to.equal(200);
+      expect(receivedBody!.lastName).to.equal("X");
+    });
 
-    it("Responds with 500 when handler throws");
+    it("Responds with 500 when handler response is invalid against schema", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .requestSchema("Employee")
+        .post(async () => invalidEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true }
+      );
+      expect(resp.status).to.equal(500);
+    });
 
-    it("Responds with 500 when handler is rejected");
+    it("Responds with 500 when handler is rejected", async () => {
+      await businessApi
+        .handle("/test")
+        .responseSchema("Employee")
+        .requestSchema("Employee")
+        .post(async () => Promise.reject(new Error("Some error")));
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true }
+      );
+      expect(resp.status).to.equal(500);
+    });
   });
 
   /* HELPERS */

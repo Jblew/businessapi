@@ -128,6 +128,9 @@ export class BusinessApiHTTP implements BusinessApi {
     } else {
       this.app.get(r.url, handler);
     }
+    if (!this.config.silent) {
+      console.log(`Handling ${r.method} on ${r.url}`);
+    }
   }
 }
 
