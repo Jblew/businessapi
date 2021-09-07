@@ -163,9 +163,9 @@ describe("BusinessApiHTTP", () => {
     it("Throws error when url env is empty", () =>
       businessApi
         .call("NONEXISTENT_URL")
-        .requestSchema("Nonexistent")
+        .requestSchema("Employee")
         .responseSchema("Chart")
-        .post({})
+        .post(validEmployee)
         .then(
           () => expect.fail("Should fail"),
           (err) => expect(err).to.match(/env .* does not exist/i)

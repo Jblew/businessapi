@@ -7,12 +7,16 @@ import axios from "axios";
 import { BusinessApi } from "./BusinessApi";
 import { makeRequest } from "./makeRequest";
 import { makeExpressHandler } from "./makeExpressHandler";
+import { BusinessApiAbstract } from "./BusinessApiAbstract";
 
-export class BusinessApiHTTP implements BusinessApi {
+export class BusinessApiHTTP
+  extends BusinessApiAbstract
+  implements BusinessApi
+{
   private app: express.Application;
-  private schema: Schema;
+
   constructor(private config: BusinessApiConfig) {
-    this.schema = new Schema(config.schemaPath);
+    super(config);
     this.app = this.makeExpressApp();
     this.installDefaultHandlers();
   }
@@ -25,61 +29,41 @@ export class BusinessApiHTTP implements BusinessApi {
     return httpServer;
   }
 
-  call(urlEnv: string) {
-    return {
-      responseSchema: <RESPONSE>(responseDefinition: string) => ({
-        get: (): Promise<RESPONSE> => {
-          return makeRequest<RESPONSE>({
-            schema: this.schema,
-            method: "GET",
-            urlEnv,
-            responseDefinition,
-          });
-        },
-      }),
-      requestSchema: <REQUEST>(requestDefinition: string) => ({
-        responseSchema: <RESPONSE>(responseDefinition: string) => ({
-          post: (body: REQUEST): Promise<RESPONSE> => {
-            return makeRequest<RESPONSE>({
-              schema: this.schema,
-              method: "POST",
-              urlEnv,
-              responseDefinition,
-              requestDefinition,
-              body,
-            });
-          },
-        }),
-      }),
+  protected bindHandler(r: {
+    method: "GET" | "POST";
+    url: string;
+    handler: (body?: any) => Promise<{ status: number; json: object }>;
+  }): void {
+    const expressHandler = async (
+      req: express.Request,
+      res: express.Response
+    ) => {
+      const { status, json } = await r.handler(req.body);
+      res.status(status).send(json);
     };
+    if (r.method === "GET") {
+      this.app.get(r.url, expressHandler);
+    } else {
+      this.app.post(r.url, expressHandler);
+    }
   }
 
-  handle(url: string) {
-    return {
-      responseSchema: <RESPONSE>(responseDefinition: string) => ({
-        get: (handler: () => Promise<RESPONSE>) => {
-          this.installHandler({
-            method: "GET",
-            url,
-            responseDefinition,
-            handler,
-          });
-        },
-      }),
-      requestSchema: <REQUEST>(requestDefinition: string) => ({
-        responseSchema: <RESPONSE>(responseDefinition: string) => ({
-          post: (handler: (body: REQUEST) => Promise<RESPONSE>) => {
-            this.installHandler({
-              method: "POST",
-              url,
-              requestDefinition,
-              responseDefinition,
-              handler,
-            });
-          },
-        }),
-      }),
-    };
+  protected async makeRequest(r: {
+    method: "GET" | "POST";
+    urlEnv: string;
+    body?: any;
+  }): Promise<{ status: number; data: any }> {
+    const url = process.env[r.urlEnv];
+    if (!url) {
+      throw new TypeError(`Env ${r.urlEnv} does not exist`);
+    }
+    const { status, data } = await axios({
+      method: r.method,
+      url,
+      data: r.body,
+      validateStatus: () => true,
+    });
+    return { status, data };
   }
 
   private makeExpressApp() {
@@ -94,45 +78,6 @@ export class BusinessApiHTTP implements BusinessApi {
   private installDefaultHandlers() {
     this.app.get("/", (_, res) => res.send(""));
     installSchemaHandlers(this.app, this.schema);
-  }
-
-  private installHandler(r: {
-    method: "POST" | "GET";
-    url: string;
-    responseDefinition: string;
-    requestDefinition?: string;
-    handler: (body?: any) => Promise<any>;
-  }) {
-    if (!this.schema.hasDefinition(r.responseDefinition)) {
-      throw new TypeError(
-        `Response schema definition ${r.responseDefinition} not found`
-      );
-    }
-    if (
-      r.requestDefinition &&
-      !this.schema.hasDefinition(r.requestDefinition)
-    ) {
-      throw new TypeError(
-        `Request schema definition ${r.requestDefinition} not found`
-      );
-    }
-    const handler = makeExpressHandler({
-      responseBodyValidator: (body) =>
-        this.schema.isValid(r.responseDefinition, body),
-      requestBodyValidator: r.requestDefinition
-        ? (body) => this.schema.isValid(r.requestDefinition!, body)
-        : undefined,
-      handler: r.handler,
-      silent: this.config.silent,
-    });
-    if (r.method === "POST") {
-      this.app.post(r.url, handler);
-    } else {
-      this.app.get(r.url, handler);
-    }
-    if (!this.config.silent) {
-      console.log(`Handling ${r.method} on ${r.url}`);
-    }
   }
 }
 
