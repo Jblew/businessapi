@@ -30,7 +30,7 @@ export class Schema {
     let error = "";
     if (!isValid) {
       error =
-        `${validator.errors?.[0].instancePath} ${validator.errors?.[0].message}`.substring(
+        `${validator.errors?.[0].instancePath} ${validator.errors?.[0].message} (definition ${definitionName})`.substring(
           0,
           200
         );
@@ -64,16 +64,16 @@ export class Schema {
       );
     }
 
-    const theirSchemaVerId = theirDefinition.properties?.SchemaVer?.["$id"];
-    const ourSchemaVerID = ourDefinition.properties?.SchemaVer?.["$id"];
+    const theirSchemaVerId = theirDefinition.properties?.SchemaVer?.enum?.[0];
+    const ourSchemaVerID = ourDefinition.properties?.SchemaVer?.enum?.[0];
     if (!theirSchemaVerId) {
       throw new TypeError(
-        "Your definition misses .properties.SchemaVer.$id field (case sensitive)"
+        "Your definition misses .properties.SchemaVer.enum[0] field (case sensitive)"
       );
     }
     if (!ourSchemaVerID) {
       throw new TypeError(
-        "Our definition misses .properties.SchemaVer.$id field (case sensitive)"
+        "Our definition misses .properties.SchemaVer.enum[0] field (case sensitive)"
       );
     }
     if (theirSchemaVerId !== ourSchemaVerID) {
