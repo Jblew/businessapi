@@ -9,6 +9,10 @@ export class BusinessApiTest
     [name: string]: (body?: any) => Promise<{ status: number; data: any }>;
   } = {};
 
+  private handlers: {
+    [url: string]: (body?: any) => Promise<{ status: number; json: any }>;
+  } = {};
+
   listen(): { close: () => void } {
     return { close() {} };
   }
@@ -41,11 +45,21 @@ export class BusinessApiTest
    */
   fakeCall(url: string) {
     return {
-      get: <RESPONSE>(): Promise<RESPONSE> => {
-        throw new Error("Not specified yet");
+      get: <RESPONSE>(): Promise<{ status: number; json: RESPONSE }> => {
+        const handler = this.handlers[url];
+        if (!handler) {
+          throw new Error(`Missing handler ${url}`);
+        }
+        return handler();
       },
-      post: <REQUEST, RESPONSE>(body: REQUEST): Promise<RESPONSE> => {
-        throw new Error("Not specified yet");
+      post: <REQUEST, RESPONSE>(
+        body: REQUEST
+      ): Promise<{ status: number; json: RESPONSE }> => {
+        const handler = this.handlers[url];
+        if (!handler) {
+          throw new Error(`Missing handler ${url}`);
+        }
+        return handler(body);
       },
     };
   }
@@ -55,7 +69,7 @@ export class BusinessApiTest
     url: string;
     handler: (body?: any) => Promise<{ status: number; json: object }>;
   }): void {
-    throw new Error("Not implemented yet");
+    this.handlers[r.url] = r.handler;
   }
 
   protected async makeRequest(r: {
