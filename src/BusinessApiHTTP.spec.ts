@@ -259,7 +259,7 @@ describe("BusinessApiHTTP", () => {
       expect(interceptor.isDone()).to.be.true;
     });
 
-    it.only("Throws error when request data is invalid against schema", async () => {
+    it("Throws error when request data is invalid against schema", async () => {
       const serviceURL = "http://nock.test/set/employee";
       process.env.SERVICE_URL_GET_EMPLOYEE = serviceURL;
       const interceptor = nock("http://nock.test")
@@ -285,7 +285,8 @@ describe("BusinessApiHTTP", () => {
         })
         .then(
           () => expect.fail("Should throw error"),
-          (err) => expect(err).to.match(/invalid request/i)
+          (err) =>
+            expect(err).to.match(/Request.*not valid.*Employee.*username/i)
         )
         .then(() => expect(interceptor.isDone()).to.be.eq(false));
     });

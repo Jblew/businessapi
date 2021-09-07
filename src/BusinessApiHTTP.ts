@@ -114,9 +114,32 @@ export class BusinessApiHTTP implements BusinessApi {
         `Request schema definition ${r.requestDefinition} not found`
       );
     }
+
+    if (r.method === "POST" && (!r.body || typeof r.body != "object")) {
+      throw new TypeError(`When method is POST, body must be an object`);
+    }
+
+    if (r.method === "POST") {
+      if (!r.requestDefinition) {
+        throw new TypeError(
+          `When method is POST, requestDefinition must be specified`
+        );
+      }
+      const { isValid, error } = this.schema.isValid(
+        r.requestDefinition!,
+        r.body
+      );
+      if (!isValid) {
+        throw new Error(
+          `Request body is not valid against schema ${r.requestDefinition}: ${error}`
+        );
+      }
+    }
+
     const resp = await axios({
       method: r.method,
       url,
+      data: r.body,
       validateStatus: () => true,
     });
     if (resp.status !== 200) {
