@@ -24,6 +24,10 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     body?: any;
   }): Promise<{ status: number; data: any }>;
 
+  getSchema() {
+    return this.schema;
+  }
+
   call(urlEnv: string) {
     return {
       responseSchema: <RESPONSE>(responseDefinition: string) => ({

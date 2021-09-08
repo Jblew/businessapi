@@ -1,5 +1,8 @@
+import { Schema } from "./Schema";
 export interface BusinessApi {
   listen(): { close(): void };
+
+  getSchema(): Schema;
 
   call(urlEnv: string): {
     requestSchema<REQUEST>(requestDefinition: string): {
