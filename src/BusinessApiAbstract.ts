@@ -1,5 +1,6 @@
 import { Schema } from "./Schema";
 import { BusinessApi } from "./BusinessApi";
+import { ConditionValidatorFn } from "src";
 
 export abstract class BusinessApiAbstract implements BusinessApi {
   protected schema: Schema;
@@ -15,7 +16,10 @@ export abstract class BusinessApiAbstract implements BusinessApi {
   protected abstract bindHandler(r: {
     method: "GET" | "POST";
     url: string;
-    handler: (body?: any) => Promise<{ status: number; json: object }>;
+    handler: (
+      headers: Record<string, string>,
+      body?: any
+    ) => Promise<{ status: number; json: object }>;
   }): void;
 
   protected abstract makeRequest(r: {
@@ -57,27 +61,33 @@ export abstract class BusinessApiAbstract implements BusinessApi {
 
   handle(url: string) {
     return {
-      responseSchema: <RESPONSE>(responseDefinition: string) => ({
-        get: (handler: () => Promise<RESPONSE> | RESPONSE) => {
-          this.installHandler({
-            method: "GET",
-            url,
-            responseDefinition,
-            handler: async () => handler(),
-          });
-        },
-      }),
-      requestSchema: <REQUEST>(requestDefinition: string) => ({
+      conditions: (conditionValidators: ConditionValidatorFn[]) => ({
         responseSchema: <RESPONSE>(responseDefinition: string) => ({
-          post: (handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE) => {
+          get: (handler: () => Promise<RESPONSE> | RESPONSE) => {
             this.installHandler({
-              method: "POST",
+              method: "GET",
               url,
-              requestDefinition,
               responseDefinition,
-              handler: async (body) => handler(body),
+              conditionValidators,
+              handler: async () => handler(),
             });
           },
+        }),
+        requestSchema: <REQUEST>(requestDefinition: string) => ({
+          responseSchema: <RESPONSE>(responseDefinition: string) => ({
+            post: (
+              handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE
+            ) => {
+              this.installHandler({
+                method: "POST",
+                url,
+                requestDefinition,
+                responseDefinition,
+                conditionValidators,
+                handler: async (body) => handler(body),
+              });
+            },
+          }),
         }),
       }),
     };
@@ -88,6 +98,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     url: string;
     responseDefinition: string;
     requestDefinition?: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<any>;
   }) {
     if (!this.schema.hasDefinition(r.responseDefinition)) {
@@ -104,7 +115,11 @@ export abstract class BusinessApiAbstract implements BusinessApi {
       );
     }
     const handler = this.makeSchemaValidatingHandler({ ...r });
-    this.bindHandler({ method: r.method, url: r.url, handler });
+    this.bindHandler({
+      method: r.method,
+      url: r.url,
+      handler,
+    });
   }
 
   private async makeCall(r: {
@@ -175,10 +190,21 @@ export abstract class BusinessApiAbstract implements BusinessApi {
   private makeSchemaValidatingHandler(r: {
     responseDefinition: string;
     requestDefinition?: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<any>;
   }) {
-    return async (requestBody?: any) => {
+    return async (headers: Record<string, string>, requestBody?: any) => {
       try {
+        const conditionResult = await this.executeConditionValidators(
+          r.conditionValidators,
+          { headers }
+        );
+        if (!conditionResult.conditionsMet) {
+          return {
+            status: 403,
+            json: { error: `Condition failed: ${conditionResult.error}` },
+          };
+        }
         if (r.requestDefinition) {
           if (!requestBody || typeof requestBody !== "object") {
             throw new Error("Request body must be a JSON object");
@@ -192,6 +218,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
           }
         }
         const responseBody = await r.handler(requestBody);
+
         const { isValid, error } = this.schema.isValid(
           r.responseDefinition,
           responseBody
@@ -199,11 +226,26 @@ export abstract class BusinessApiAbstract implements BusinessApi {
         if (!isValid) {
           throw new Error(`Handler response is not valid: ${error}`);
         }
+
         return { status: 200, json: responseBody };
       } catch (err) {
         if (!this.silent) console.error(err);
         return { status: 500, json: { error: "Internal server error" } };
       }
     };
+  }
+
+  private async executeConditionValidators(
+    conditionValidators: ConditionValidatorFn[],
+    { headers }: { headers: Record<string, string> }
+  ): Promise<{ conditionsMet: boolean; error: string }> {
+    for (let i = 0; i < conditionValidators.length; i++) {
+      const validator = conditionValidators[i];
+      const result = await (async () => validator({ headers }))();
+      if (!result) {
+        return { conditionsMet: false, error: `Condition no. ${i} failed` };
+      }
+    }
+    return { conditionsMet: true, error: "" };
   }
 }

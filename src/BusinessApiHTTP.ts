@@ -6,6 +6,7 @@ import { installSchemaHandlers } from "./endpoints_schema";
 import axios from "axios";
 import { BusinessApi } from "./BusinessApi";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
+import { ConditionValidatorFn } from "src";
 
 export class BusinessApiHTTP
   extends BusinessApiAbstract
@@ -13,7 +14,7 @@ export class BusinessApiHTTP
 {
   private app: express.Application;
 
-  constructor(private config: BusinessApiConfig) {
+  constructor(private config: BusinessApiHTTPConfig) {
     super(config);
     this.app = this.makeExpressApp();
     this.installDefaultHandlers();
@@ -30,13 +31,18 @@ export class BusinessApiHTTP
   protected bindHandler(r: {
     method: "GET" | "POST";
     url: string;
-    handler: (body?: any) => Promise<{ status: number; json: object }>;
+    conditionValidators: ConditionValidatorFn[];
+    handler: (
+      headers: Record<string, string>,
+      body?: any
+    ) => Promise<{ status: number; json: object }>;
   }): void {
     const expressHandler = async (
       req: express.Request,
       res: express.Response
     ) => {
-      const { status, json } = await r.handler(req.body);
+      const headers = headersToRecord(req.headers);
+      const { status, json } = await r.handler(headers, req.body);
       res.status(status).send(json);
     };
     if (r.method === "GET") {
@@ -79,7 +85,22 @@ export class BusinessApiHTTP
   }
 }
 
-export interface BusinessApiConfig {
+function headersToRecord(
+  expressHeaders: Record<string, string[] | string | undefined>
+): Record<string, string> {
+  const out: Record<string, string> = {};
+
+  Object.keys(expressHeaders).forEach((k) => {
+    const v = expressHeaders[k];
+    if (typeof v !== "undefined") {
+      out[k] = Array.isArray(v) ? v[0] : v;
+    }
+  });
+
+  return out;
+}
+
+export interface BusinessApiHTTPConfig {
   schemaPath: string;
   silent?: boolean;
   port?: number;

@@ -294,6 +294,7 @@ describe("BusinessApiHTTP", () => {
       expect(() =>
         businessApi
           .handle("/")
+          .conditions([])
           .responseSchema("NonExistentSchema")
           .get(async () => ({}))
       ).to.throw(TypeError));
@@ -301,6 +302,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 200 when handler is resolved", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .responseSchema("Employee")
         .get(async () => validEmployee);
       const resp = await axios.get(`http://localhost:${port}/test`, {
@@ -313,6 +315,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 404 on not found", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .responseSchema("Employee")
         .get(async () => validEmployee);
       const resp = await axios.get(`http://localhost:${port}/nonexistent`, {
@@ -324,6 +327,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 500 when handler response is invalid against schema", async () => {
       await businessApi
         .handle("/testInvalid")
+        .conditions([])
         .responseSchema("Employee")
         .get(async () => invalidEmployee);
       const resp = await axios.get(`http://localhost:${port}/testInvalid`, {
@@ -335,6 +339,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 500 when handler is rejected", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .responseSchema("Employee")
         .get(async () => Promise.reject(new Error("Some error")));
       const resp = await axios.get(`http://localhost:${port}/test`, {
@@ -349,6 +354,7 @@ describe("BusinessApiHTTP", () => {
       expect(() =>
         businessApi
           .handle("/")
+          .conditions([])
           .requestSchema("NonExistentSchema")
           .responseSchema("Employee")
           .post(async (_) => ({}))
@@ -357,6 +363,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 409 when request body is invalid against schema", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .requestSchema("Employee")
         .responseSchema("Employee")
         .post(async () => validEmployee);
@@ -372,6 +379,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 200 when handler is resolved", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .requestSchema("Employee")
         .responseSchema("Employee")
         .post(async () => validEmployee);
@@ -388,6 +396,7 @@ describe("BusinessApiHTTP", () => {
       let receivedBody: any;
       await businessApi
         .handle("/test")
+        .conditions([])
         .requestSchema("Employee")
         .responseSchema("Employee")
         .post(async (body) => {
@@ -406,6 +415,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 500 when handler response is invalid against schema", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .requestSchema("Employee")
         .responseSchema("Employee")
         .post(async () => invalidEmployee);
@@ -420,6 +430,7 @@ describe("BusinessApiHTTP", () => {
     it("Responds with 500 when handler is rejected", async () => {
       await businessApi
         .handle("/test")
+        .conditions([])
         .requestSchema("Employee")
         .responseSchema("Employee")
         .post(async () => Promise.reject(new Error("Some error")));
@@ -429,6 +440,63 @@ describe("BusinessApiHTTP", () => {
         { validateStatus: () => true }
       );
       expect(resp.status).to.equal(500);
+    });
+
+    it("Feeds headers list to condition resolver", async () => {
+      let lastHeaders: Record<string, string> = {};
+      const headerValidator = (req: { headers: Record<string, string> }) => {
+        lastHeaders = req.headers;
+        return true;
+      };
+      await businessApi
+        .handle("/test")
+        .conditions([headerValidator])
+        .requestSchema("Employee")
+        .responseSchema("Employee")
+        .post(async () => validEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true, headers: { "X-Test-Header": "abcd" } }
+      );
+      expect(resp.status).to.equal(200);
+      expect(lastHeaders["x-test-header"]).to.equal("abcd");
+    });
+
+    it("Responds with 200 when condition is met", async () => {
+      const headerValidator = (req: { headers: Record<string, string> }) => {
+        return req.headers["x-test-header"] === "valid";
+      };
+      await businessApi
+        .handle("/test")
+        .conditions([headerValidator])
+        .requestSchema("Employee")
+        .responseSchema("Employee")
+        .post(async () => validEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true, headers: { "X-Test-Header": "valid" } }
+      );
+      expect(resp.status).to.equal(200);
+    });
+
+    it("Responds with 403 when condition is not met", async () => {
+      const headerValidator = (req: { headers: Record<string, string> }) => {
+        return req.headers["x-test-header"] === "valid";
+      };
+      await businessApi
+        .handle("/test")
+        .conditions([headerValidator])
+        .requestSchema("Employee")
+        .responseSchema("Employee")
+        .post(async () => validEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true, headers: { "X-Test-Header": "invalid" } }
+      );
+      expect(resp.status).to.equal(403);
     });
   });
 

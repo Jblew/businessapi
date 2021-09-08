@@ -1,3 +1,4 @@
+import { ConditionValidatorFn } from "src";
 import { BusinessApi } from "./BusinessApi";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
 
@@ -10,7 +11,10 @@ export class BusinessApiTest
   } = {};
 
   private handlers: {
-    [url: string]: (body?: any) => Promise<{ status: number; json: any }>;
+    [url: string]: (
+      headers: Record<string, string>,
+      body?: any
+    ) => Promise<{ status: number; json: any }>;
   } = {};
 
   listen(): { close: () => void } {
@@ -50,7 +54,8 @@ export class BusinessApiTest
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
         }
-        return handler();
+        const headers = {};
+        return handler(headers);
       },
       post: <REQUEST, RESPONSE>(
         body: REQUEST
@@ -59,7 +64,8 @@ export class BusinessApiTest
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
         }
-        return handler(body);
+        const headers = {};
+        return handler(headers, body);
       },
     };
   }
@@ -67,7 +73,10 @@ export class BusinessApiTest
   protected bindHandler(r: {
     method: "GET" | "POST";
     url: string;
-    handler: (body?: any) => Promise<{ status: number; json: object }>;
+    handler: (
+      headers: Record<string, string>,
+      body?: any
+    ) => Promise<{ status: number; json: object }>;
   }): void {
     this.handlers[r.url] = r.handler;
   }

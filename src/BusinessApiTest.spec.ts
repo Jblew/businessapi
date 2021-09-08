@@ -57,6 +57,7 @@ describe("BusinessApiTest", () => {
       let callCount = 0;
       businessApi
         .handle("/test")
+        .conditions([])
         .responseSchema("Employee")
         .get(async () => {
           callCount++;
@@ -73,6 +74,7 @@ describe("BusinessApiTest", () => {
       let requestBody: any;
       businessApi
         .handle("/test")
+        .conditions([])
         .requestSchema("Employee")
         .responseSchema("Employee")
         .post(async (body: any) => {
