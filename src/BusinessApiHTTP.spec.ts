@@ -100,7 +100,16 @@ describe("BusinessApiHTTP", () => {
     });
   });
 
-  describe("endpoint - get", () => {
+  describe("getSchema", () => {
+    it("Returns Schema manipulator object", () => {
+      const actualSchema = getSchema();
+      const schema = businessApi.getSchema();
+      expect(schema.hasDefinition).to.be.a("function");
+      expect(schema.getSchemaObject()).to.deep.equal(actualSchema);
+    });
+  });
+
+  describe("call - get", () => {
     it("Throws error when url env is empty", () =>
       businessApi
         .call("NONEXISTENT_URL")
@@ -159,7 +168,7 @@ describe("BusinessApiHTTP", () => {
     });
   });
 
-  describe("endpoint - post", () => {
+  describe("call - post", () => {
     it("Throws error when url env is empty", () =>
       businessApi
         .call("NONEXISTENT_URL")
@@ -250,6 +259,33 @@ describe("BusinessApiHTTP", () => {
             expect(err).to.match(/Request.*not valid.*Employee.*username/i)
         );
       expect(interceptor.isDone()).to.be.eq(false);
+    });
+
+    it("Throws error when request data is not an object", async () => {
+      process.env.SERVICE_URL_GET_EMPLOYEE = "http://nock.test/set/employee";
+      await businessApi
+        .call("SERVICE_URL_GET_EMPLOYEE")
+        .requestSchema("Employee")
+        .responseSchema<any>("Employee")
+        .post("a string")
+        .then(
+          () => expect.fail("Should throw error"),
+          (err) => expect(err).to.match(/must be an object/i)
+        );
+    });
+
+    it("Throws error when request schema is empty", async () => {
+      process.env.SERVICE_URL_GET_EMPLOYEE = "http://nock.test/set/employee";
+      await businessApi
+        .call("SERVICE_URL_GET_EMPLOYEE")
+        .requestSchema("")
+        .responseSchema<any>("Employee")
+        .post(validEmployee)
+        .then(
+          () => expect.fail("Should throw error"),
+          (err) =>
+            expect(err).to.match(/request schema definition must be specified/i)
+        );
     });
   });
 
