@@ -1,6 +1,6 @@
 {
   "name": "@jblew/businessapi",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Helper library for hosting business logic api using JSON Schema",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
