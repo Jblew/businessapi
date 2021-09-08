@@ -58,24 +58,24 @@ export abstract class BusinessApiAbstract implements BusinessApi {
   handle(url: string) {
     return {
       responseSchema: <RESPONSE>(responseDefinition: string) => ({
-        get: (handler: () => Promise<RESPONSE>) => {
+        get: (handler: () => Promise<RESPONSE> | RESPONSE) => {
           this.installHandler({
             method: "GET",
             url,
             responseDefinition,
-            handler,
+            handler: async () => handler(),
           });
         },
       }),
       requestSchema: <REQUEST>(requestDefinition: string) => ({
         responseSchema: <RESPONSE>(responseDefinition: string) => ({
-          post: (handler: (body: REQUEST) => Promise<RESPONSE>) => {
+          post: (handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE) => {
             this.installHandler({
               method: "POST",
               url,
               requestDefinition,
               responseDefinition,
-              handler,
+              handler: async (body) => handler(body),
             });
           },
         }),
@@ -134,7 +134,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
       }
       if (!r.requestDefinition) {
         throw new TypeError(
-          `When method is POST, requestDefinition must be specified`
+          `When method is POST, request schema definition must be specified`
         );
       }
       const { isValid, error } = this.schema.isValid(

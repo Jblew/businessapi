@@ -18,11 +18,11 @@ export interface BusinessApi {
   handle(url: string): {
     requestSchema<REQUEST>(requestDefinition: string): {
       responseSchema<RESPONSE>(responseDefinition: string): {
-        post(handler: (body: REQUEST) => Promise<RESPONSE>): void;
+        post(handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE): void;
       };
     };
     responseSchema<RESPONSE>(responseDefinition: string): {
-      get(handler: () => Promise<RESPONSE>): void;
+      get(handler: () => Promise<RESPONSE> | RESPONSE): void;
     };
   };
 }
