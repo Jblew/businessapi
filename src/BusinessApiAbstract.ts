@@ -1,5 +1,6 @@
 import { Schema } from "./Schema";
 import { BusinessApi } from "./BusinessApi";
+import { ConditionValidatorFn } from "src";
 
 export abstract class BusinessApiAbstract implements BusinessApi {
   protected schema: Schema;
@@ -15,6 +16,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
   protected abstract bindHandler(r: {
     method: "GET" | "POST";
     url: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<{ status: number; json: object }>;
   }): void;
 
@@ -57,27 +59,33 @@ export abstract class BusinessApiAbstract implements BusinessApi {
 
   handle(url: string) {
     return {
-      responseSchema: <RESPONSE>(responseDefinition: string) => ({
-        get: (handler: () => Promise<RESPONSE> | RESPONSE) => {
-          this.installHandler({
-            method: "GET",
-            url,
-            responseDefinition,
-            handler: async () => handler(),
-          });
-        },
-      }),
-      requestSchema: <REQUEST>(requestDefinition: string) => ({
+      conditions: (conditionValidators: ConditionValidatorFn[]) => ({
         responseSchema: <RESPONSE>(responseDefinition: string) => ({
-          post: (handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE) => {
+          get: (handler: () => Promise<RESPONSE> | RESPONSE) => {
             this.installHandler({
-              method: "POST",
+              method: "GET",
               url,
-              requestDefinition,
               responseDefinition,
-              handler: async (body) => handler(body),
+              conditionValidators,
+              handler: async () => handler(),
             });
           },
+        }),
+        requestSchema: <REQUEST>(requestDefinition: string) => ({
+          responseSchema: <RESPONSE>(responseDefinition: string) => ({
+            post: (
+              handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE
+            ) => {
+              this.installHandler({
+                method: "POST",
+                url,
+                requestDefinition,
+                responseDefinition,
+                conditionValidators,
+                handler: async (body) => handler(body),
+              });
+            },
+          }),
         }),
       }),
     };
@@ -88,6 +96,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     url: string;
     responseDefinition: string;
     requestDefinition?: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<any>;
   }) {
     if (!this.schema.hasDefinition(r.responseDefinition)) {
@@ -104,7 +113,12 @@ export abstract class BusinessApiAbstract implements BusinessApi {
       );
     }
     const handler = this.makeSchemaValidatingHandler({ ...r });
-    this.bindHandler({ method: r.method, url: r.url, handler });
+    this.bindHandler({
+      method: r.method,
+      url: r.url,
+      conditionValidators: r.conditionValidators,
+      handler,
+    });
   }
 
   private async makeCall(r: {

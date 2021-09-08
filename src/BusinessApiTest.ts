@@ -1,3 +1,4 @@
+import { ConditionValidatorFn } from "src";
 import { BusinessApi } from "./BusinessApi";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
 
@@ -67,6 +68,7 @@ export class BusinessApiTest
   protected bindHandler(r: {
     method: "GET" | "POST";
     url: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<{ status: number; json: object }>;
   }): void {
     this.handlers[r.url] = r.handler;

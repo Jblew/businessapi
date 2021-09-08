@@ -16,15 +16,19 @@ export interface BusinessApi {
   };
 
   handle(url: string): {
-    requestSchema<REQUEST>(requestDefinition: string): {
-      responseSchema<RESPONSE>(responseDefinition: string): {
-        post(handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE): void;
+    conditions(conditionValidators: ConditionValidatorFn[]): {
+      requestSchema<REQUEST>(requestDefinition: string): {
+        responseSchema<RESPONSE>(responseDefinition: string): {
+          post(handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE): void;
+        };
       };
-    };
-    responseSchema<RESPONSE>(responseDefinition: string): {
-      get(handler: () => Promise<RESPONSE> | RESPONSE): void;
+      responseSchema<RESPONSE>(responseDefinition: string): {
+        get(handler: () => Promise<RESPONSE> | RESPONSE): void;
+      };
     };
   };
 }
 
-// TODO swap orders, to always include request before response
+export type ConditionValidatorFn = (props: {
+  headers: Record<string, string[]>;
+}) => boolean | Promise<boolean>;

@@ -6,6 +6,7 @@ import { installSchemaHandlers } from "./endpoints_schema";
 import axios from "axios";
 import { BusinessApi } from "./BusinessApi";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
+import { ConditionValidatorFn } from "src";
 
 export class BusinessApiHTTP
   extends BusinessApiAbstract
@@ -30,6 +31,7 @@ export class BusinessApiHTTP
   protected bindHandler(r: {
     method: "GET" | "POST";
     url: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<{ status: number; json: object }>;
   }): void {
     const expressHandler = async (
