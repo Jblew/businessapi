@@ -16,8 +16,10 @@ export abstract class BusinessApiAbstract implements BusinessApi {
   protected abstract bindHandler(r: {
     method: "GET" | "POST";
     url: string;
-    conditionValidators: ConditionValidatorFn[];
-    handler: (body?: any) => Promise<{ status: number; json: object }>;
+    handler: (
+      headers: Record<string, string>,
+      body?: any
+    ) => Promise<{ status: number; json: object }>;
   }): void;
 
   protected abstract makeRequest(r: {
@@ -116,7 +118,6 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     this.bindHandler({
       method: r.method,
       url: r.url,
-      conditionValidators: r.conditionValidators,
       handler,
     });
   }
@@ -189,10 +190,21 @@ export abstract class BusinessApiAbstract implements BusinessApi {
   private makeSchemaValidatingHandler(r: {
     responseDefinition: string;
     requestDefinition?: string;
+    conditionValidators: ConditionValidatorFn[];
     handler: (body?: any) => Promise<any>;
   }) {
-    return async (requestBody?: any) => {
+    return async (headers: Record<string, string>, requestBody?: any) => {
       try {
+        const conditionResult = await this.executeConditionValidators(
+          r.conditionValidators,
+          { headers }
+        );
+        if (!conditionResult.conditionsMet) {
+          return {
+            status: 403,
+            json: { error: `Condition failed: ${conditionResult.error}` },
+          };
+        }
         if (r.requestDefinition) {
           if (!requestBody || typeof requestBody !== "object") {
             throw new Error("Request body must be a JSON object");
@@ -206,6 +218,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
           }
         }
         const responseBody = await r.handler(requestBody);
+
         const { isValid, error } = this.schema.isValid(
           r.responseDefinition,
           responseBody
@@ -213,11 +226,26 @@ export abstract class BusinessApiAbstract implements BusinessApi {
         if (!isValid) {
           throw new Error(`Handler response is not valid: ${error}`);
         }
+
         return { status: 200, json: responseBody };
       } catch (err) {
         if (!this.silent) console.error(err);
         return { status: 500, json: { error: "Internal server error" } };
       }
     };
+  }
+
+  private async executeConditionValidators(
+    conditionValidators: ConditionValidatorFn[],
+    { headers }: { headers: Record<string, string> }
+  ): Promise<{ conditionsMet: boolean; error: string }> {
+    for (let i = 0; i < conditionValidators.length; i++) {
+      const validator = conditionValidators[i];
+      const result = await (async () => validator({ headers }))();
+      if (!result) {
+        return { conditionsMet: false, error: `Condition no. ${i} failed` };
+      }
+    }
+    return { conditionsMet: true, error: "" };
   }
 }

@@ -443,8 +443,8 @@ describe("BusinessApiHTTP", () => {
     });
 
     it("Feeds headers list to condition resolver", async () => {
-      let lastHeaders: Record<string, string[]> = {};
-      const headerValidator = (req: { headers: Record<string, string[]> }) => {
+      let lastHeaders: Record<string, string> = {};
+      const headerValidator = (req: { headers: Record<string, string> }) => {
         lastHeaders = req.headers;
         return true;
       };
@@ -460,12 +460,12 @@ describe("BusinessApiHTTP", () => {
         { validateStatus: () => true, headers: { "X-Test-Header": "abcd" } }
       );
       expect(resp.status).to.equal(200);
-      expect(lastHeaders["X-Test-Header"][0]).to.equal("abcd");
+      expect(lastHeaders["x-test-header"]).to.equal("abcd");
     });
 
     it("Responds with 200 when condition is met", async () => {
-      const headerValidator = (req: { headers: Record<string, string[]> }) => {
-        return req.headers["X-Test-Header"]?.[0] === "valid";
+      const headerValidator = (req: { headers: Record<string, string> }) => {
+        return req.headers["x-test-header"] === "valid";
       };
       await businessApi
         .handle("/test")
@@ -478,12 +478,12 @@ describe("BusinessApiHTTP", () => {
         validEmployee,
         { validateStatus: () => true, headers: { "X-Test-Header": "valid" } }
       );
-      expect(resp.status).to.equal(403);
+      expect(resp.status).to.equal(200);
     });
 
     it("Responds with 403 when condition is not met", async () => {
-      const headerValidator = (req: { headers: Record<string, string[]> }) => {
-        return req.headers["X-Test-Header"]?.[0] === "valid";
+      const headerValidator = (req: { headers: Record<string, string> }) => {
+        return req.headers["x-test-header"] === "valid";
       };
       await businessApi
         .handle("/test")
