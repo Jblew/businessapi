@@ -50,24 +50,24 @@ export class BusinessApiTest
   fakeCall(url: string) {
     return {
       get: <RESPONSE>(
-        req: Partial<BusinessApiRequestParams> = {}
+        reqParams: Partial<BusinessApiRequestParams> = {}
       ): Promise<{ status: number; json: RESPONSE }> => {
         const handler = this.handlers[url];
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
         }
-        const params = { headers: {} };
+        const params = this.sanitizeParams(reqParams);
         return handler(params);
       },
       post: <REQUEST, RESPONSE>(
         body: REQUEST,
-        req: Partial<BusinessApiRequestParams> = {}
+        reqParams: Partial<BusinessApiRequestParams> = {}
       ): Promise<{ status: number; json: RESPONSE }> => {
         const handler = this.handlers[url];
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
         }
-        const params = { headers: {} };
+        const params = this.sanitizeParams(reqParams);
         return handler(params, body);
       },
     };
@@ -96,5 +96,16 @@ export class BusinessApiTest
       );
     }
     return service(r.body);
+  }
+
+  private sanitizeParams(reqParams: Partial<BusinessApiRequestParams> = {}) {
+    const unsanitizedHeaders = reqParams.headers || {};
+    const headers: Record<string, string> = Object.keys(unsanitizedHeaders)
+      .map((k) => [k, unsanitizedHeaders[k]])
+      .map(([k, v]) => [k.toLowerCase(), v])
+      .reduce((all, [k, v]) => ({ ...all, [k]: v }), {});
+    return {
+      headers,
+    };
   }
 }
