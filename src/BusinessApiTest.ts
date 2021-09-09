@@ -1,4 +1,4 @@
-import { ConditionValidatorFn } from "src";
+import { BusinessApiRequestParams, ConditionValidatorFn } from "src";
 import { BusinessApi } from "./BusinessApi";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
 
@@ -12,7 +12,7 @@ export class BusinessApiTest
 
   private handlers: {
     [url: string]: (
-      headers: Record<string, string>,
+      params: BusinessApiRequestParams,
       body?: any
     ) => Promise<{ status: number; json: any }>;
   } = {};
@@ -54,8 +54,8 @@ export class BusinessApiTest
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
         }
-        const headers = {};
-        return handler(headers);
+        const params = { headers: {} };
+        return handler(params);
       },
       post: <REQUEST, RESPONSE>(
         body: REQUEST
@@ -64,8 +64,8 @@ export class BusinessApiTest
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
         }
-        const headers = {};
-        return handler(headers, body);
+        const params = { headers: {} };
+        return handler(params, body);
       },
     };
   }
@@ -74,7 +74,7 @@ export class BusinessApiTest
     method: "GET" | "POST";
     url: string;
     handler: (
-      headers: Record<string, string>,
+      params: BusinessApiRequestParams,
       body?: any
     ) => Promise<{ status: number; json: object }>;
   }): void {
