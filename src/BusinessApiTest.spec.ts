@@ -69,6 +69,23 @@ describe("BusinessApiTest", () => {
       expect((json as any).username).to.be.equal(validEmployee.username);
     });
 
+    it("fakeCall.get - passes headers", async () => {
+      let lastHeaders: Record<string, string> = {};
+      businessApi
+        .handle("/test")
+        .conditions([])
+        .responseSchema("Employee")
+        .get(async ({ headers }) => {
+          lastHeaders = headers;
+          return validEmployee;
+        });
+      const { status } = await businessApi
+        .fakeCall("/test")
+        .get({ headers: { "X-Some-Header": "qwerty" } });
+      expect(status).to.equal(200);
+      expect(lastHeaders["x-some-header"]).to.be.equal("qwerty");
+    });
+
     it("Calls the installed with post and passes the data to the local handler", async () => {
       let callCount = 0;
       let requestBody: any;
@@ -89,6 +106,24 @@ describe("BusinessApiTest", () => {
       expect(status).to.equal(200);
       expect((json as any).username).to.be.equal(validEmployee.username);
       expect(requestBody.username).to.be.equal(validEmployee.username);
+    });
+
+    it("fakeCall.post - passes headers", async () => {
+      let lastHeaders: Record<string, string> = {};
+      businessApi
+        .handle("/test")
+        .conditions([])
+        .requestSchema("Employee")
+        .responseSchema("Employee")
+        .post(async (_, { headers }) => {
+          lastHeaders = headers;
+          return validEmployee;
+        });
+      const { status } = await businessApi
+        .fakeCall("/test")
+        .post(validEmployee, { headers: { "X-Some-Header": "qwerty" } });
+      expect(status).to.equal(200);
+      expect(lastHeaders["x-some-header"]).to.be.equal("qwerty");
     });
   });
 });
