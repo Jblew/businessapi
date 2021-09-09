@@ -19,16 +19,29 @@ export interface BusinessApi {
     conditions(conditionValidators: ConditionValidatorFn[]): {
       requestSchema<REQUEST>(requestDefinition: string): {
         responseSchema<RESPONSE>(responseDefinition: string): {
-          post(handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE): void;
+          post(handler: BusinessApiPOSTHandlerFn<REQUEST, RESPONSE>): void;
         };
       };
       responseSchema<RESPONSE>(responseDefinition: string): {
-        get(handler: () => Promise<RESPONSE> | RESPONSE): void;
+        get(handler: BusinessApiGETHandlerFn<RESPONSE>): void;
       };
     };
   };
 }
 
-export type ConditionValidatorFn = (props: {
+export type ConditionValidatorFn = (
+  props: BusinessApiRequestParams
+) => boolean | Promise<boolean>;
+
+export interface BusinessApiRequestParams {
   headers: Record<string, string>;
-}) => boolean | Promise<boolean>;
+}
+
+export type BusinessApiGETHandlerFn<RESPONSE> = (
+  req: BusinessApiRequestParams
+) => RESPONSE | Promise<RESPONSE>;
+
+export type BusinessApiPOSTHandlerFn<REQUEST, RESPONSE> = (
+  body: REQUEST,
+  req: BusinessApiRequestParams
+) => RESPONSE | Promise<RESPONSE>;

@@ -1,6 +1,11 @@
 import { Schema } from "./Schema";
 import { BusinessApi } from "./BusinessApi";
-import { ConditionValidatorFn } from "src";
+import {
+  BusinessApiGETHandlerFn,
+  BusinessApiPOSTHandlerFn,
+  BusinessApiRequestParams,
+  ConditionValidatorFn,
+} from "src";
 
 export abstract class BusinessApiAbstract implements BusinessApi {
   protected schema: Schema;
@@ -17,7 +22,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     method: "GET" | "POST";
     url: string;
     handler: (
-      headers: Record<string, string>,
+      req: { headers: Record<string, string> },
       body?: any
     ) => Promise<{ status: number; json: object }>;
   }): void;
@@ -63,28 +68,26 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     return {
       conditions: (conditionValidators: ConditionValidatorFn[]) => ({
         responseSchema: <RESPONSE>(responseDefinition: string) => ({
-          get: (handler: () => Promise<RESPONSE> | RESPONSE) => {
+          get: (handler: BusinessApiGETHandlerFn<RESPONSE>) => {
             this.installHandler({
               method: "GET",
               url,
               responseDefinition,
               conditionValidators,
-              handler: async () => handler(),
+              handler: async ({ params }) => handler(params),
             });
           },
         }),
         requestSchema: <REQUEST>(requestDefinition: string) => ({
           responseSchema: <RESPONSE>(responseDefinition: string) => ({
-            post: (
-              handler: (body: REQUEST) => Promise<RESPONSE> | RESPONSE
-            ) => {
+            post: (handler: BusinessApiPOSTHandlerFn<REQUEST, RESPONSE>) => {
               this.installHandler({
                 method: "POST",
                 url,
                 requestDefinition,
                 responseDefinition,
                 conditionValidators,
-                handler: async (body) => handler(body),
+                handler: async ({ params, body }) => handler(body, params),
               });
             },
           }),
@@ -99,7 +102,10 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     responseDefinition: string;
     requestDefinition?: string;
     conditionValidators: ConditionValidatorFn[];
-    handler: (body?: any) => Promise<any>;
+    handler: (r: {
+      params: BusinessApiRequestParams;
+      body?: any;
+    }) => Promise<any>;
   }) {
     if (!this.schema.hasDefinition(r.responseDefinition)) {
       throw new TypeError(
@@ -114,11 +120,11 @@ export abstract class BusinessApiAbstract implements BusinessApi {
         `Request schema definition ${r.requestDefinition} not found`
       );
     }
-    const handler = this.makeSchemaValidatingHandler({ ...r });
+    const schemaValidatingHandler = this.makeSchemaValidatingHandler({ ...r });
     this.bindHandler({
       method: r.method,
       url: r.url,
-      handler,
+      handler: schemaValidatingHandler,
     });
   }
 
@@ -191,13 +197,16 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     responseDefinition: string;
     requestDefinition?: string;
     conditionValidators: ConditionValidatorFn[];
-    handler: (body?: any) => Promise<any>;
+    handler: (r: {
+      params: BusinessApiRequestParams;
+      body?: any;
+    }) => Promise<any>;
   }) {
-    return async (headers: Record<string, string>, requestBody?: any) => {
+    return async (params: BusinessApiRequestParams, requestBody?: any) => {
       try {
         const conditionResult = await this.executeConditionValidators(
           r.conditionValidators,
-          { headers }
+          { headers: params.headers }
         );
         if (!conditionResult.conditionsMet) {
           return {
@@ -217,7 +226,7 @@ export abstract class BusinessApiAbstract implements BusinessApi {
             return { status: 409, json: { error } };
           }
         }
-        const responseBody = await r.handler(requestBody);
+        const responseBody = await r.handler({ params, body: requestBody });
 
         const { isValid, error } = this.schema.isValid(
           r.responseDefinition,
