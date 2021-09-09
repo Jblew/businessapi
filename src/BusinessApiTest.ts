@@ -49,7 +49,9 @@ export class BusinessApiTest
    */
   fakeCall(url: string) {
     return {
-      get: <RESPONSE>(): Promise<{ status: number; json: RESPONSE }> => {
+      get: <RESPONSE>(
+        req: Partial<BusinessApiRequestParams> = {}
+      ): Promise<{ status: number; json: RESPONSE }> => {
         const handler = this.handlers[url];
         if (!handler) {
           throw new Error(`Missing handler ${url}`);
@@ -58,7 +60,8 @@ export class BusinessApiTest
         return handler(params);
       },
       post: <REQUEST, RESPONSE>(
-        body: REQUEST
+        body: REQUEST,
+        req: Partial<BusinessApiRequestParams> = {}
       ): Promise<{ status: number; json: RESPONSE }> => {
         const handler = this.handlers[url];
         if (!handler) {
