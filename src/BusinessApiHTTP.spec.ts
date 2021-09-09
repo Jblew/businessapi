@@ -347,6 +347,24 @@ describe("BusinessApiHTTP", () => {
       });
       expect(resp.status).to.equal(500);
     });
+
+    it("Passes headers to handler in 1st argument", async () => {
+      let lastHeaders: Record<string, string> = {};
+      await businessApi
+        .handle("/test")
+        .conditions([])
+        .responseSchema("Employee")
+        .get(async ({ headers }) => {
+          lastHeaders = headers;
+          return validEmployee;
+        });
+      const resp = await axios.get(`http://localhost:${port}/test`, {
+        validateStatus: () => true,
+        headers: { "X-Test-Header": "xyz" },
+      });
+      expect(resp.status).to.equal(200);
+      expect(lastHeaders["x-test-header"]).to.equal("xyz");
+    });
   });
 
   describe("handle - post", () => {
@@ -497,6 +515,29 @@ describe("BusinessApiHTTP", () => {
         { validateStatus: () => true, headers: { "X-Test-Header": "invalid" } }
       );
       expect(resp.status).to.equal(403);
+    });
+
+    it("Passes headers to handler in 2nd argument", async () => {
+      let lastHeaders: Record<string, string> = {};
+      await businessApi
+        .handle("/test")
+        .conditions([])
+        .requestSchema("Employee")
+        .responseSchema("Employee")
+        .post(async (_, { headers }) => {
+          lastHeaders = headers;
+          return validEmployee;
+        });
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        {
+          validateStatus: () => true,
+          headers: { "X-Test-Header": "xyz" },
+        }
+      );
+      expect(resp.status).to.equal(200);
+      expect(lastHeaders["x-test-header"]).to.equal("xyz");
     });
   });
 

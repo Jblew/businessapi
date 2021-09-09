@@ -6,7 +6,7 @@ import { installSchemaHandlers } from "./endpoints_schema";
 import axios from "axios";
 import { BusinessApi } from "./BusinessApi";
 import { BusinessApiAbstract } from "./BusinessApiAbstract";
-import { ConditionValidatorFn } from "src";
+import { BusinessApiRequestParams, ConditionValidatorFn } from "src";
 
 export class BusinessApiHTTP
   extends BusinessApiAbstract
@@ -33,7 +33,7 @@ export class BusinessApiHTTP
     url: string;
     conditionValidators: ConditionValidatorFn[];
     handler: (
-      headers: Record<string, string>,
+      params: BusinessApiRequestParams,
       body?: any
     ) => Promise<{ status: number; json: object }>;
   }): void {
@@ -42,7 +42,8 @@ export class BusinessApiHTTP
       res: express.Response
     ) => {
       const headers = headersToRecord(req.headers);
-      const { status, json } = await r.handler(headers, req.body);
+      const reqParams = { headers };
+      const { status, json } = await r.handler(reqParams, req.body);
       res.status(status).send(json);
     };
     if (r.method === "GET") {
