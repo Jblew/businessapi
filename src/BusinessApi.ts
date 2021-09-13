@@ -31,7 +31,7 @@ export interface BusinessApi {
 
 export type ConditionValidatorFn = (
   props: BusinessApiRequestParams
-) => boolean | Promise<boolean>;
+) => true | string | Promise<true | string>;
 
 export interface BusinessApiRequestParams {
   headers: Record<string, string>;

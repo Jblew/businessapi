@@ -462,7 +462,9 @@ describe("BusinessApiHTTP", () => {
 
     it("Feeds headers list to condition resolver", async () => {
       let lastHeaders: Record<string, string> = {};
-      const headerValidator = (req: { headers: Record<string, string> }) => {
+      const headerValidator = (req: {
+        headers: Record<string, string>;
+      }): true | string => {
         lastHeaders = req.headers;
         return true;
       };
@@ -483,7 +485,9 @@ describe("BusinessApiHTTP", () => {
 
     it("Responds with 200 when condition is met", async () => {
       const headerValidator = (req: { headers: Record<string, string> }) => {
-        return req.headers["x-test-header"] === "valid";
+        return req.headers["x-test-header"] === "valid"
+          ? true
+          : "Header is invalid";
       };
       await businessApi
         .handle("/test")
@@ -501,7 +505,9 @@ describe("BusinessApiHTTP", () => {
 
     it("Responds with 403 when condition is not met", async () => {
       const headerValidator = (req: { headers: Record<string, string> }) => {
-        return req.headers["x-test-header"] === "valid";
+        return req.headers["x-test-header"] === "valid"
+          ? true
+          : "header is invalid";
       };
       await businessApi
         .handle("/test")
@@ -515,6 +521,26 @@ describe("BusinessApiHTTP", () => {
         { validateStatus: () => true, headers: { "X-Test-Header": "invalid" } }
       );
       expect(resp.status).to.equal(403);
+    });
+
+    it("When condition is met, error field contains condition failure string", async () => {
+      const headerValidator = (req: { headers: Record<string, string> }) => {
+        return req.headers["x-test-header"] === "valid"
+          ? true
+          : "header is invalid";
+      };
+      await businessApi
+        .handle("/test")
+        .conditions([headerValidator])
+        .requestSchema("Employee")
+        .responseSchema("Employee")
+        .post(async () => validEmployee);
+      const resp = await axios.post(
+        `http://localhost:${port}/test`,
+        validEmployee,
+        { validateStatus: () => true, headers: { "X-Test-Header": "invalid" } }
+      );
+      expect(resp.data.error).to.match(/header is invalid/);
     });
 
     it("Passes headers to handler in 2nd argument", async () => {

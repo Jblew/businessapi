@@ -251,8 +251,11 @@ export abstract class BusinessApiAbstract implements BusinessApi {
     for (let i = 0; i < conditionValidators.length; i++) {
       const validator = conditionValidators[i];
       const result = await (async () => validator({ headers }))();
-      if (!result) {
-        return { conditionsMet: false, error: `Condition no. ${i} failed` };
+      if (result !== true) {
+        return {
+          conditionsMet: false,
+          error: `Condition no. ${i} failed: ${result}`,
+        };
       }
     }
     return { conditionsMet: true, error: "" };
